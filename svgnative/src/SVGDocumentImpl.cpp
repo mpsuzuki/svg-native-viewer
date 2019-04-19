@@ -53,7 +53,7 @@ SVGDocumentImpl::SVGDocumentImpl(std::shared_ptr<SVGRenderer> renderer)
 
     GraphicStyleImpl graphicStyle{};
     std::set<std::string> classNames;
-    mGroup = std::make_unique<Group>(graphicStyle, classNames);
+    mGroup = std::unique_ptr<Group>(new Group(graphicStyle, classNames));
     mGroupStack.push(mGroup.get());
 }
 
@@ -153,7 +153,7 @@ void SVGDocumentImpl::ParseChild(XMLNode* child)
     // or path first.
     if (auto path = ParseShape(child))
     {
-        AddChildToCurrentGroup(std::make_unique<Graphic>(graphicStyle, classNames, fillStyle, strokeStyle, std::move(path)));
+        AddChildToCurrentGroup(std::unique_ptr<Graphic>(new Graphic(graphicStyle, classNames, fillStyle, strokeStyle, std::move(path))));
         return;
     }
 
@@ -164,7 +164,7 @@ void SVGDocumentImpl::ParseChild(XMLNode* child)
         mFillStyleStack.push(fillStyle);
         mStrokeStyleStack.push(strokeStyle);
 
-        auto group = std::make_unique<Group>(graphicStyle, classNames);
+        auto group = std::unique_ptr<Group>(new Group(graphicStyle, classNames));
         auto tempGroupPtr = group.get();
         AddChildToCurrentGroup(std::move(group));
         mGroupStack.push(tempGroupPtr);
@@ -219,7 +219,7 @@ void SVGDocumentImpl::ParseChild(XMLNode* child)
             float imageWidth = imageData->Width();
             float imageHeight = imageData->Height();
 
-            Rect clipArea = {ParseLengthFromAttr(child, "x", LengthType::kHorrizontal),
+            Rect clipArea{ParseLengthFromAttr(child, "x", LengthType::kHorrizontal),
                 ParseLengthFromAttr(child, "y", LengthType::kVertical),
                 ParseLengthFromAttr(child, "width", LengthType::kHorrizontal, imageWidth),
                 ParseLengthFromAttr(child, "height", LengthType::kVertical, imageHeight)};
@@ -301,7 +301,7 @@ void SVGDocumentImpl::ParseChild(XMLNode* child)
             // Do not render 0-sized elements.
             if (imageWidth && imageHeight && clipArea.width && clipArea.height && fillArea.width && fillArea.height)
             {
-                auto image = std::make_unique<Image>(graphicStyle, classNames, std::move(imageData), clipArea, fillArea);
+                auto image = std::unique_ptr<Image>(new Image(graphicStyle, classNames, std::move(imageData), clipArea, fillArea));
                 AddChildToCurrentGroup(std::move(image));
             }
         }
@@ -322,7 +322,7 @@ void SVGDocumentImpl::ParseChild(XMLNode* child)
             transform->Concat(*graphicStyle.transform);
         graphicStyle.transform = std::move(transform);
 
-        auto group = std::make_unique<Group>(graphicStyle, classNames);
+        auto group = std::unique_ptr<Group>(new Group(graphicStyle, classNames));
         mGroupStack.push(group.get());
         AddChildToCurrentGroup(std::move(group));
 
@@ -345,7 +345,7 @@ void SVGDocumentImpl::ParseChild(XMLNode* child)
             }
         }
 
-        auto group = std::make_unique<Group>(graphicStyle, classNames);
+        auto group = std::unique_ptr<Group>(new Group(graphicStyle, classNames));
         mGroupStack.push(group.get());
         AddChildToCurrentGroup(std::move(group));
 
@@ -924,11 +924,11 @@ void SVGDocumentImpl::ParseColorStops(XMLNode* node, GradientImpl& gradient)
     if (colorStops.size() > 1)
     {
         const auto& firstStop = colorStops.front();
-        if (std::get<0>(firstStop) != 0.0f)
-            colorStops.insert(colorStops.begin(), {0.0f, std::get<1>(firstStop), std::get<2>(firstStop)});
+        if (boost::get<0>(firstStop) != 0.0f)
+            colorStops.insert(colorStops.begin(), {0.0f, boost::get<1>(firstStop), boost::get<2>(firstStop)});
         const auto& lastStop = colorStops.back();
-        if (std::get<0>(lastStop) != 1.0f)
-            colorStops.push_back({1.0f, std::get<1>(lastStop), std::get<2>(lastStop)});
+        if (boost::get<0>(lastStop) != 1.0f)
+            colorStops.push_back({1.0f, boost::get<1>(lastStop), boost::get<2>(lastStop)});
     }
     // Keep the color stops from referenced gradients if the current gradient
     // has none.
@@ -1116,7 +1116,7 @@ static void ResolvePaintImpl(const ColorMap& colorMap, const PaintImpl& internal
         for (auto& colorStop : internalGradient.internalColorStops)
         {
             Color stopColor{};
-            const auto& colorImpl = std::get<1>(colorStop);
+            const auto& colorImpl = boost::get<1>(colorStop);
             if (colorImpl.type() == typeid(Variable))
             {
                 const auto& var = boost::get<Variable>(colorImpl);
@@ -1129,8 +1129,8 @@ static void ResolvePaintImpl(const ColorMap& colorMap, const PaintImpl& internal
             {
                 SVG_ASSERT_MSG(false, "Unhandled ColorImpl type");
             }
-            stopColor[3] *= std::get<2>(colorStop);
-            gradient.colorStops.push_back({std::get<0>(colorStop), stopColor});
+            stopColor[3] *= boost::get<2>(colorStop);
+            gradient.colorStops.push_back({boost::get<0>(colorStop), stopColor});
         }
     }
     else if (internalPaint.type() == typeid(Color))

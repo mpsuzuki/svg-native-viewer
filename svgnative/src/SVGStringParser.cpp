@@ -1068,7 +1068,7 @@ SVGDocumentImpl::Result ParsePaint(const std::string& colorString, const std::ma
                 if (gradient.internalColorStops.empty())
                     return SVGDocumentImpl::Result::kDisabled;
                 else if (gradient.internalColorStops.size() == 1)
-                    paint = std::get<1>(gradient.internalColorStops.front());
+                    paint = boost::get<1>(gradient.internalColorStops.front());
                 else
                 {
                     // Percentage values that do neither correlate to horrizontal nor vertical dimensions

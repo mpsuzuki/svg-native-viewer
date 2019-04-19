@@ -45,7 +45,7 @@ A valid SVG Native document is always a valid SVG1.1/2.0 document.
 
 ## SVG Native Viewer Library
 
-SVG Native Viewer is a C++14 based project and can either be included in the source code of a client directly or linked statically or dynamically.
+SVG Native Viewer is a C++11 based project and can either be included in the source code of a client directly or linked statically or dynamically.
 
 For rendering, SVG Native Viewer requires a rendering port. Already existing ports include:
 * **StringSVGRenderer** for testing purposes,
@@ -160,16 +160,12 @@ Replace `win64` with your platform (`mac` for Xcode on macOS)
 cmake --build build/win64 --config Release
 ```
 
-## C++14/Boost requirements
-
-The following C++14 features get used and would need to get replaced to compile SVG Native Viewer in a C++11 environment.
-* Advanced features of initialization lists
-* Changes to default CTOR/DTOR
-* `std::tuple` to hold 3 different color-stop values.
+## Boost requirements
 
 Only the header version of Boost is required. The following Boost features are used:
 * Boost RapidXML (could be replace by RapidXML standalone)
 * `boost::variant` to handle different SVG paint types of `fill` and `stroke` as well as different color value types.
+* `boost::tuple` to hold 3 different color-stop values.
 * Boost string functions like `boost::tokenizer`, `boost::trim`. _(Only used by deprecated CSS `<style>` element parsing.)_
 
 ## Tests

@@ -18,6 +18,7 @@ governing permissions and limitations under the License.
 
 #include <array>
 #include <boost/property_tree/detail/xml_parser_read_rapidxml.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <map>
 #include <set>
 #include <stack>
@@ -40,7 +41,7 @@ enum class ColorKeys
 using Variable = std::pair<std::string, Color>;
 using ColorImpl = boost::variant<Color, Variable, ColorKeys>;
 using PaintImpl = boost::variant<Color, GradientImpl, Variable, ColorKeys>;
-using ColorStopImpl = std::tuple<float, ColorImpl, float>;
+using ColorStopImpl = boost::tuple<float, ColorImpl, float>;
 
 struct GradientImpl : public Gradient
 {
