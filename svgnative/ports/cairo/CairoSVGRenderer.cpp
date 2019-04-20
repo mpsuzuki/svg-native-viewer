@@ -111,7 +111,7 @@ CairoSVGTransform::CairoSVGTransform(float a, float b, float c, float d, float t
 
 void CairoSVGTransform::Set(float a, float b, float c, float d, float tx, float ty) {
     // see CGSVGRenderer.cpp,
-    // internal of SkiaSVGTransform::SkiaSVGTransform() and SkiaSVGTransform::Set() are same.
+    // internal of CGSVGTransform::CGSVGTransform() and CGSVGTransform::Set() are same.
     cairo_matrix_init(&mMatrix, a, b, c, d, tx, ty);
 }
 
