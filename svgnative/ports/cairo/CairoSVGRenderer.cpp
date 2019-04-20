@@ -1,0 +1,280 @@
+/*
+Copyright 2019 Adobe. All rights reserved.
+This file is licensed to you under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License. You may obtain a copy
+of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under
+the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+OF ANY KIND, either express or implied. See the License for the specific language
+governing permissions and limitations under the License.
+*/
+
+#include "CairoSVGRenderer.h"
+#include "base64.h"
+#include "Config.h"
+#include "cairo.h"
+// #include "SkCanvas.h"
+// #include "SkData.h"
+// #include "SkGradientShader.h"
+// #include "SkImage.h"
+// #include "SkPoint.h"
+// #include "SkRect.h"
+// #include "SkRRect.h"
+// #include "SkShader.h"
+#include <math.h>
+
+namespace SVGNative
+{
+CairoSVGPath::CairoSVGPath() {}
+
+void CairoSVGPath::Rect(float x, float y, float width, float height)
+{
+    cairo_new_sub_path (mPath.cr);
+    cairo_rectangle (mPath.cr, x, y, width, height);
+    cairo_close_path (mPath.cr);
+    mPath.path = cairo_copy_path (mPath.cr);
+}
+
+void CairoSVGPath::RoundedRect(float x, float y, float width, float height, float cornerRadius)
+{
+    // Cairo does not provide single API to draw "rounded rect". See
+    // https://www.cairographics.org/samples/rounded_rectangle/
+
+    double    aspect = 1.0;
+    double    radius = cornerRadius / aspect;
+    double    degrees = M_PI / 180.0;
+
+    cairo_new_sub_path (mPath.cr);
+    cairo_arc (mPath.cr, x + width - radius, y + radius,          radius, -90 * degrees,   0 * degrees);
+    cairo_arc (mPath.cr, x + width - radius, y + height - radius, radius,   0 * degrees,  90 * degrees);
+    cairo_arc (mPath.cr, x + radius,         y + height - radius, radius,  90 * degrees, 180 * degrees);
+    cairo_arc (mPath.cr, x + radius,         y + radius,          radius, 180 * degrees, 270 * degrees);
+    cairo_close_path (mPath.cr);
+    mPath.path = cairo_copy_path (mPath.cr);
+}
+
+void CairoSVGPath::Ellipse(float cx, float cy, float rx, float ry) {
+    // Cairo does not provide single API to draw "ellipse". See
+    // https://cairographics.org/cookbook/ellipses/
+
+    cairo_matrix_t  save_matrix;
+    cairo_get_matrix (mPath.cr, &save_matrix); 
+
+    cairo_translate (mPath.cr, cx, cy);
+    cairo_scale (mPath.cr, rx, ry);
+    cairo_arc (mPath.cr, 0, 0, 1, 0, 2 * M_PI);
+
+    cairo_set_matrix (mPath.cr, &save_matrix); 
+    mPath.path = cairo_copy_path (mPath.cr);
+}
+
+void CairoSVGPath::MoveTo(float x, float y)
+{
+    cairo_move_to (mPath.cr, x, y);
+    mCurrentX = x;
+    mCurrentY = y;
+}
+
+void SkiaSVGPath::LineTo(float x, float y)
+{
+    cairo_line_to (mPath.cr, x, y);
+    mCurrentX = x;
+    mCurrentY = y;
+    mPath.path = cairo_copy_path (mPath.cr);
+}
+
+void SkiaSVGPath::CurveTo(float x1, float y1, float x2, float y2, float x3, float y3)
+{
+    cairo_curve_to (mPath.cr, x1, y1, x2, y2, x3, y3);
+    mCurrentX = x3;
+    mCurrentY = y3;
+    mPath.path = cairo_copy_path (mPath.cr);
+}
+
+void SkiaSVGPath::CurveToV(float x2, float y2, float x3, float y3)
+{
+    cairo_curve_to (mPath.cr, mCurrentX, mCurrentY, x2, y2, x3, y3);
+    mCurrentX = x3;
+    mCurrentY = y3;
+    mPath.path = cairo_copy_path (mPath.cr);
+}
+
+void SkiaSVGPath::ClosePath() {
+    cairo_close_path (cr);
+    mPath.path = cairo_copy_path (mPath.cr);
+}
+
+SkiaSVGTransform::SkiaSVGTransform(float a, float b, float c, float d, float tx, float ty) {
+    cairo_matrix_init(&mMatrix, a, b, c, d, tx, ty);
+}
+
+void SkiaSVGTransform::Set(float a, float b, float c, float d, float tx, float ty) {
+    // see CGSVGRenderer.cpp,
+    // internal of SkiaSVGTransform::SkiaSVGTransform() and SkiaSVGTransform::Set() are same.
+    cairo_matrix_init(&mMatrix, a, b, c, d, tx, ty);
+}
+
+void SkiaSVGTransform::Rotate(float degree) {
+    cairo_matrix_rotate(&mMatrix, degree * M_PI / 180.0 );
+}
+
+void SkiaSVGTransform::Translate(float tx, float ty) {
+    cairo_matrix_translate(&mMatrix, tx, ty);
+}
+
+void SkiaSVGTransform::Scale(float sx, float sy) {
+    cairo_matrix_scale(&mMatrix, sx, sy);
+}
+
+void SkiaSVGTransform::Concat(const Transform& other) {
+    cairo_matrix_t  result;
+    cairo_matrix_multiply(&result, &mMatrix, &(static_cast<const CairoSVGTransform&>(other).mMatrix));
+    // Cairo has no API to copy a matrix to another
+    cairo_matrix_init(&mMatrix, result.xx, result.yx, result.xy, result.yy, result.x0, result.y0); 
+}
+
+SkiaSVGImageData::SkiaSVGImageData(const std::string& base64, ImageEncoding /*encoding*/)
+{
+    std::string imageString = base64_decode(base64);
+    auto skData = SkData::MakeWithCopy(imageString.data(), imageString.size());
+    mImageData = SkImage::MakeFromEncoded(skData);
+}
+
+float SkiaSVGImageData::Width() const
+{
+    if (!mImageData)
+        return 0;
+    return static_cast<float>(mImageData->width());
+}
+
+float SkiaSVGImageData::Height() const
+{
+    if (!mImageData)
+        return 0;
+    return static_cast<float>(mImageData->height());
+}
+
+SkiaSVGRenderer::SkiaSVGRenderer() {}
+
+void SkiaSVGRenderer::Save(const GraphicStyle& graphicStyle)
+{
+    SVG_ASSERT(mCanvas);
+    if (graphicStyle.opacity != 1.0)
+        mCanvas->saveLayerAlpha(nullptr, graphicStyle.opacity);
+    else
+        mCanvas->save();
+    if (graphicStyle.transform)
+        mCanvas->concat(static_cast<SkiaSVGTransform*>(graphicStyle.transform.get())->mMatrix);
+    if (graphicStyle.clippingPath && graphicStyle.clippingPath->path)
+    {
+        SkPath clippingPath(static_cast<const SkiaSVGPath*>(graphicStyle.clippingPath->path.get())->mPath);
+        if (graphicStyle.clippingPath->transform)
+        {
+            const auto& matrix = static_cast<const SkiaSVGTransform*>(graphicStyle.clippingPath->transform.get())->mMatrix;
+            clippingPath.transform(matrix);
+        }
+		clippingPath.setFillType(graphicStyle.clippingPath->clipRule == WindingRule::kNonZero ? SkPath::kWinding_FillType : SkPath::kEvenOdd_FillType);
+        mCanvas->clipPath(clippingPath);
+    }
+}
+
+void SkiaSVGRenderer::Restore()
+{
+    SVG_ASSERT(mCanvas);
+    mCanvas->restore();
+}
+
+inline void CreateSkPaint(const Paint& paint, float opacity, SkPaint& skPaint)
+{
+    if (paint.type() == typeid(Color))
+    {
+        const auto& color = boost::get<Color>(paint);
+        skPaint.setColor(SkColorSetARGB(static_cast<uint8_t>(opacity * color[3] * 255), static_cast<uint8_t>(color[0] * 255),
+            static_cast<uint8_t>(color[1] * 255), static_cast<uint8_t>(color[2] * 255)));
+    }
+    else if (paint.type() == typeid(Gradient))
+    {
+        const auto& gradient = boost::get<Gradient>(paint);
+        std::vector<SkColor> colors;
+        std::vector<SkScalar> pos;
+        for (const auto& stop : gradient.colorStops)
+        {
+            pos.push_back(stop.first);
+            const auto& stopColor = stop.second;
+            colors.push_back(SkColorSetARGB(static_cast<uint8_t>(opacity * stopColor[3] * 255), static_cast<uint8_t>(stopColor[0] * 255),
+                static_cast<uint8_t>(stopColor[1] * 255), static_cast<uint8_t>(stopColor[2] * 255)));
+        }
+        SkShader::TileMode mode;
+        switch (gradient.method)
+        {
+        case SpreadMethod::kReflect:
+            mode = SkShader::TileMode::kMirror_TileMode;
+            break;
+        case SpreadMethod::kRepeat:
+            mode = SkShader::TileMode::kRepeat_TileMode;
+            break;
+        case SpreadMethod::kPad:
+        default:
+            mode = SkShader::TileMode::kClamp_TileMode;
+            break;
+        }
+        SkMatrix* matrix{};
+        if (gradient.transform)
+            matrix = &(static_cast<SkiaSVGTransform*>(gradient.transform.get())->mMatrix);
+        if (gradient.type == GradientType::kLinearGradient)
+        {
+            SkPoint points[2] = {SkPoint::Make(gradient.x1, gradient.y1), SkPoint::Make(gradient.x2, gradient.y2)};
+            skPaint.setShader(
+                SkGradientShader::MakeLinear(points, colors.data(), pos.data(), static_cast<int>(colors.size()), mode, 0, matrix));
+        }
+        else if (gradient.type == GradientType::kRadialGradient)
+        {
+            skPaint.setShader(
+                SkGradientShader::MakeTwoPointConical(SkPoint::Make(gradient.fx, gradient.fy), 0, SkPoint::Make(gradient.cx, gradient.cy),
+                    gradient.r, colors.data(), pos.data(), static_cast<int>(colors.size()), mode, 0, matrix));
+        }
+    }
+}
+
+void SkiaSVGRenderer::DrawPath(
+    const Path& path, const GraphicStyle& graphicStyle, const FillStyle& fillStyle, const StrokeStyle& strokeStyle)
+{
+    SVG_ASSERT(mCanvas);
+    Save(graphicStyle);
+    if (fillStyle.hasFill)
+    {
+        // FIXME: Handle winding rules.
+        SkPaint fill;
+        fill.setStyle(SkPaint::kFill_Style);
+        CreateSkPaint(fillStyle.paint, fillStyle.fillOpacity, fill);
+        mCanvas->drawPath(static_cast<const SkiaSVGPath&>(path).mPath, fill);
+    }
+    if (strokeStyle.hasStroke)
+    {
+        SkPaint stroke;
+        stroke.setStyle(SkPaint::kStroke_Style);
+        CreateSkPaint(strokeStyle.paint, strokeStyle.strokeOpacity, stroke);
+        mCanvas->drawPath(static_cast<const SkiaSVGPath&>(path).mPath, stroke);
+    }
+    Restore();
+}
+
+void SkiaSVGRenderer::DrawImage(
+    const ImageData& image, const GraphicStyle& graphicStyle, const Rect& clipArea, const Rect& fillArea)
+{
+    SVG_ASSERT(mCanvas);
+    Save(graphicStyle);
+    mCanvas->clipRect({clipArea.x, clipArea.y, clipArea.x + clipArea.width, clipArea.y + clipArea.height}, SkClipOp::kIntersect);
+    mCanvas->drawImageRect(static_cast<const SkiaSVGImageData&>(image).mImageData,
+        {fillArea.x, fillArea.y, fillArea.x + fillArea.width, fillArea.y + fillArea.height}, nullptr);
+    Restore();
+}
+
+void SkiaSVGRenderer::SetSkCanvas(SkCanvas* canvas)
+{
+    SVG_ASSERT(canvas);
+    mCanvas = canvas;
+}
+
+} // namespace SVGNative
