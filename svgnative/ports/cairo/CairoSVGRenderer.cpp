@@ -76,7 +76,7 @@ void CairoSVGPath::MoveTo(float x, float y)
     mCurrentY = y;
 }
 
-void SkiaSVGPath::LineTo(float x, float y)
+void CairoSVGPath::LineTo(float x, float y)
 {
     cairo_line_to (mPath.cr, x, y);
     mCurrentX = x;
@@ -84,7 +84,7 @@ void SkiaSVGPath::LineTo(float x, float y)
     mPath.path = cairo_copy_path (mPath.cr);
 }
 
-void SkiaSVGPath::CurveTo(float x1, float y1, float x2, float y2, float x3, float y3)
+void CairoSVGPath::CurveTo(float x1, float y1, float x2, float y2, float x3, float y3)
 {
     cairo_curve_to (mPath.cr, x1, y1, x2, y2, x3, y3);
     mCurrentX = x3;
@@ -92,7 +92,7 @@ void SkiaSVGPath::CurveTo(float x1, float y1, float x2, float y2, float x3, floa
     mPath.path = cairo_copy_path (mPath.cr);
 }
 
-void SkiaSVGPath::CurveToV(float x2, float y2, float x3, float y3)
+void CairoSVGPath::CurveToV(float x2, float y2, float x3, float y3)
 {
     cairo_curve_to (mPath.cr, mCurrentX, mCurrentY, x2, y2, x3, y3);
     mCurrentX = x3;
@@ -100,34 +100,34 @@ void SkiaSVGPath::CurveToV(float x2, float y2, float x3, float y3)
     mPath.path = cairo_copy_path (mPath.cr);
 }
 
-void SkiaSVGPath::ClosePath() {
+void CairoSVGPath::ClosePath() {
     cairo_close_path (cr);
     mPath.path = cairo_copy_path (mPath.cr);
 }
 
-SkiaSVGTransform::SkiaSVGTransform(float a, float b, float c, float d, float tx, float ty) {
+CairoSVGTransform::CairoSVGTransform(float a, float b, float c, float d, float tx, float ty) {
     cairo_matrix_init(&mMatrix, a, b, c, d, tx, ty);
 }
 
-void SkiaSVGTransform::Set(float a, float b, float c, float d, float tx, float ty) {
+void CairoSVGTransform::Set(float a, float b, float c, float d, float tx, float ty) {
     // see CGSVGRenderer.cpp,
     // internal of SkiaSVGTransform::SkiaSVGTransform() and SkiaSVGTransform::Set() are same.
     cairo_matrix_init(&mMatrix, a, b, c, d, tx, ty);
 }
 
-void SkiaSVGTransform::Rotate(float degree) {
+void CairoSVGTransform::Rotate(float degree) {
     cairo_matrix_rotate(&mMatrix, degree * M_PI / 180.0 );
 }
 
-void SkiaSVGTransform::Translate(float tx, float ty) {
+void CairoSVGTransform::Translate(float tx, float ty) {
     cairo_matrix_translate(&mMatrix, tx, ty);
 }
 
-void SkiaSVGTransform::Scale(float sx, float sy) {
+void CairoSVGTransform::Scale(float sx, float sy) {
     cairo_matrix_scale(&mMatrix, sx, sy);
 }
 
-void SkiaSVGTransform::Concat(const Transform& other) {
+void CairoSVGTransform::Concat(const Transform& other) {
     cairo_matrix_t  result;
     cairo_matrix_multiply(&result, &mMatrix, &(static_cast<const CairoSVGTransform&>(other).mMatrix));
     // Cairo has no API to copy a matrix to another
