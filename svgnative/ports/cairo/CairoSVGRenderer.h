@@ -16,12 +16,17 @@ governing permissions and limitations under the License.
 #include "SVGRenderer.h"
 #include "cairo.h"
 
-// struct SkRect;
-// class SkCanvas;
-// class SkImage;
-
 namespace SVGNative
 {
+
+  // SkiaSVGPath object is able to be amended, but Cairo has no API to append something
+  // to existing cairo_path_t object. Thus, holding both of an opaque cairo_t surface and
+  // cairo_path_t.
+  typedef struct _CairoMPath {
+    cairo_path_t*  path;
+    cairo_t*       cr;
+  } CairoMPath_t;
+
 class CairoSVGPath final : public Path
 {
 public:
@@ -37,7 +42,7 @@ public:
     void CurveToV(float x2, float y2, float x3, float y3) override;
     void ClosePath() override;
 
-    cairo_path_t* mPath;
+    CairoMPath_t mPath;
 
 private:
     float mCurrentX{};
@@ -55,7 +60,7 @@ public:
     void Scale(float sx, float sy) override;
     void Concat(const Transform& other) override;
 
-    cairo_matrix_t* mMatrix;
+    cairo_matrix_t mMatrix;
 };
 
 class CairoSVGImageData final : public ImageData
