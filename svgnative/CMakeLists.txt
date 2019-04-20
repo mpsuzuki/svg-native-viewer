@@ -34,14 +34,17 @@ option(LIB_ONLY "Create a project for library only" OFF)
 option(TEXT "Enable Text port for testing" ON)
 option(CG "Enable CoreGraphics/Quartz2D port")
 option(SKIA "Enable Skia port")
+option(CAIRO "Enable Cairo port")
 
 CMAKE_DEPENDENT_OPTION(USE_TEXT "Text port for testing" TRUE "TEXT" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CG "CoreGraphics needs to be enabled and run on macOS/iOS" TRUE "APPLE;CG" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_SKIA "Skia" TRUE "SKIA" FALSE)
+CMAKE_DEPENDENT_OPTION(USE_CAIRO "Cairo port for testing" TRUE "CAIRO" FALSE)
 
 CMAKE_DEPENDENT_OPTION(USE_TEXT_EXAMPLE "Text port for testing" TRUE "NOT LIB_ONLY;TEXT" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CG_EXAMPLE "CoreGraphics needs to be enabled and run on macOS/iOS" TRUE "NOT LIB_ONLY;USE_CG" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_SKIA_EXAMPLE "Skia" TRUE "NOT LIB_ONLY;SKIA" FALSE)
+CMAKE_DEPENDENT_OPTION(USE_CAIRO_EXAMPLE "Cairo" TRUE "NOT LIB_ONLY;CAIRO" FALSE)
 
 ################################
 # Other Attributes
@@ -79,6 +82,9 @@ add_subdirectory(example/testCocoaCG)
 endif()
 if (USE_SKIA_EXAMPLE)
 add_subdirectory(example/testSkia)
+endif()
+if (USE_CAIRO_EXAMPLE)
+add_subdirectory(example/testCairo)
 endif()
 
 ##############################
@@ -128,6 +134,14 @@ file(GLOB skia_port
 )
 endif()
 
+set(cairo_port)
+if (USE_CAIRO)
+file(GLOB cairo_port
+    ports/cairo/CairoSVGRenderer.h
+    ports/cairo/CairoSVGRenderer.cpp
+)
+endif()
+
 ##############################
 # Library settings
 ##############################
@@ -164,6 +178,9 @@ target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/include/gpu")
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpp-base64")
 endif()
+if (USE_CAIRO)
+# XXX
+endif()
 
 ##############################
 # Library search paths
@@ -180,6 +197,9 @@ target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_p
 else()
 target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/out/Shared/libskia.so")
 endif()
+endif()
+if (USE_CAIRO)
+# XXX
 endif()
 
 set_target_properties(SVGNativeViewerLib PROPERTIES LINKER_LANGUAGE CXX)
