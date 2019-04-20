@@ -37,12 +37,7 @@ public:
     void CurveToV(float x2, float y2, float x3, float y3) override;
     void ClosePath() override;
 
-    // Native SVG's path object could be a collection of multiple paths.
-    // Skia's rect, round-rect, ellipse APIs can add new path object to existing path object,
-    // but Cairo's has no such API to add existing path object.
-    // thus we cannot use cairo_path_t object as the internal data, we have to use opaque cairo_t object,
-    // to hold a surface.
-    cairo_t* mPath;
+    cairo_path_t* mPath;
 
 private:
     float mCurrentX{};
