@@ -177,11 +177,14 @@ float SkiaSVGImageData::Height() const
     return static_cast<float>(mImageData.height);
 }
 
-SkiaSVGRenderer::SkiaSVGRenderer() {}
+CairoSVGRenderer::CairoSVGRenderer()
+{
+}
 
-void SkiaSVGRenderer::Save(const GraphicStyle& graphicStyle)
+void CairoSVGRenderer::Save(const GraphicStyle& graphicStyle)
 {
     SVG_ASSERT(mCanvas);
+    cairo_save(mCanvas);
     if (graphicStyle.opacity != 1.0)
         mCanvas->saveLayerAlpha(nullptr, graphicStyle.opacity);
     else
@@ -201,10 +204,10 @@ void SkiaSVGRenderer::Save(const GraphicStyle& graphicStyle)
     }
 }
 
-void SkiaSVGRenderer::Restore()
+void CairoSVGRenderer::Restore()
 {
     SVG_ASSERT(mCanvas);
-    mCanvas->restore();
+    cairo_restore(mCanvas);
 }
 
 inline void CreateSkPaint(const Paint& paint, float opacity, SkPaint& skPaint)
@@ -259,25 +262,30 @@ inline void CreateSkPaint(const Paint& paint, float opacity, SkPaint& skPaint)
     }
 }
 
-void SkiaSVGRenderer::DrawPath(
+void CairoSVGRenderer::DrawPath(
     const Path& path, const GraphicStyle& graphicStyle, const FillStyle& fillStyle, const StrokeStyle& strokeStyle)
 {
     SVG_ASSERT(mCanvas);
     Save(graphicStyle);
     if (fillStyle.hasFill)
     {
-        // FIXME: Handle winding rules.
-        SkPaint fill;
-        fill.setStyle(SkPaint::kFill_Style);
-        CreateSkPaint(fillStyle.paint, fillStyle.fillOpacity, fill);
-        mCanvas->drawPath(static_cast<const SkiaSVGPath&>(path).mPath, fill);
+        cairo_set_source_rgba(mCanvas, r, g, b, a);
+        cairo_set_fill_rule (mCanvas, fr);
+
+        cairo_new_path (mCanvas);
+        cairo_append_path (mCanvas, static_cast<const CairoSVGPath&>(path).mPath->path);
+        cairo_fill (mCanvas);
     }
     if (strokeStyle.hasStroke)
     {
-        SkPaint stroke;
-        stroke.setStyle(SkPaint::kStroke_Style);
-        CreateSkPaint(strokeStyle.paint, strokeStyle.strokeOpacity, stroke);
-        mCanvas->drawPath(static_cast<const SkiaSVGPath&>(path).mPath, stroke);
+        cairo_set_source_rgba(mCanvas, r, g, b, a);
+        cairo_set_line_width(mCanvas, lw);
+        cairo_set_line_cap(mCanvas, lc);
+        cairo_set_line_join(mCanvas, lj);
+
+        cairo_new_path (mCanvas);
+        cairo_append_path (mCanvas, static_cast<const CairoSVGPath&>(path).mPath->path);
+        cairo_stroke (mCanvas);
     }
     Restore();
 }
