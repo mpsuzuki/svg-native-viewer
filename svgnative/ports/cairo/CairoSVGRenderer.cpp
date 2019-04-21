@@ -290,14 +290,24 @@ void CairoSVGRenderer::DrawPath(
     Restore();
 }
 
-void SkiaSVGRenderer::DrawImage(
+void CairoSVGRenderer::DrawImage(
     const ImageData& image, const GraphicStyle& graphicStyle, const Rect& clipArea, const Rect& fillArea)
 {
     SVG_ASSERT(mCanvas);
     Save(graphicStyle);
-    mCanvas->clipRect({clipArea.x, clipArea.y, clipArea.x + clipArea.width, clipArea.y + clipArea.height}, SkClipOp::kIntersect);
+    cairo_new_path (mCanvas);
+    cairo_rectangle (mCanvas, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
+
+    const CairoSVGImageData cairoSvgImgData = static_cast<const CairoSVGImageData&>(image);
+    int imgWidth = (int)cairoSvgImageData.Width();
+    int imgHeight = (int)cairoSvgImageData.Height();
+    int imgStride = (int)cairo_format_stride_for_width (cFmt, imgWidth);
+    
+    cairo_surface_t* cr = cairo_image_surface_create_for_data (cairoSvgImgData.mImageData.blob, cFmt, imgWidth, imgHeight, imgStride);
+
     mCanvas->drawImageRect(static_cast<const SkiaSVGImageData&>(image).mImageData,
         {fillArea.x, fillArea.y, fillArea.x + fillArea.width, fillArea.y + fillArea.height}, nullptr);
+    cairo_set_source_surface();
     Restore();
 }
 
