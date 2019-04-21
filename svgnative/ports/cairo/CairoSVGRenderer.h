@@ -20,7 +20,7 @@ namespace SVGNative
 {
 
   // SkiaSVGPath object is able to be amended, but Cairo has no API to append something
-  // to existing cairo_path_t object. Thus, holding both of an opaque cairo_t surface and
+  // to existing cairo_path_t object. Thus, we hold both of an opaque cairo_t surface and
   // cairo_path_t.
   typedef struct _CairoMPath {
     cairo_path_t*  path;
@@ -63,6 +63,18 @@ public:
     cairo_matrix_t mMatrix;
 };
 
+  // SkImage object has APIs to retrieve its metrics, but Cairo has no object
+  // type for that. Thus, we hold the image info, blob and its size. To postpone
+  // the decision of the appropriate encoding in the emission, JPEG is stored
+  // as JPEG, PNG is stored as PNG.
+  typedef struct _CairoMImageData {
+    ImageEncoding  encoding;
+    size_t         width;
+    size_t         height;
+    size_t         blob_size;
+    unsigned char* blob;
+  } CairoMImageData_t;
+
 class CairoSVGImageData final : public ImageData
 {
 public:
@@ -72,10 +84,8 @@ public:
 
     float Height() const override;
 
-    // Cairo has no special data type to pass a raster data to the renderer.
-    // cairo_surface_t is a dual-use type, for renderin destination, and
-    // for a raster data to be rendered.
-    cairo_surface_t* mImageData;
+    
+    CairoMImageData_t mImageData;
 };
 
 class CairoSVGRenderer final : public SVGRenderer
