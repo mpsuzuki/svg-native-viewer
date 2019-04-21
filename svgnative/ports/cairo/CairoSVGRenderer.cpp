@@ -137,44 +137,51 @@ void CairoSVGTransform::Concat(const Transform& other) {
 CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding encoding)
 {
     cairo_image_info_t  img_info = {0, 0, 0, 0};
+    cairo_format_t      cr_fmt;
+    char                mime_type[64]; // XXX: C++ has better technique?
     std::string imageString = base64_decode(base64);
-
-    mImageData.encoding = encoding;
-    mImageData.blob_size = imageString.size() + 1;
 
     switch (encoding) {
     case kJPEG:
         if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_jpeg_info(&img_info, imageString.data(), imageString.size())) {
             return;
-            mImageData.width = img_info.width;
-            mImageData.height = img_info.height;
         };
+        strncpy(mime_type, CAIRO_MIME_TYPE_JPEG, sizeof(mime_type));
+        break;
     case kPNG:
         if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_png_info(&img_info, imageString.data(), imageString.size())) {
             return;
         };
+        strncpy(mime_type, CAIRO_MIME_TYPE_PNG, sizeof(mime_type));
+        break;
     default:
-            return;
+        return;
     };
- 
-    mImageData.width = img_info.width;
-    mImageData.height = img_info.height;
-    mImageData.blob = new unsigned char[mImageData.blob_size];
-    memcpy(mImageData.blob, imageString.data(), imageString.size());
+
+    switch (img_info.num_components) {
+    default:
+        cr_fmt = CAIRO_FORMAT_ARGB32;
+    };
+
+    void* blob_data = malloc( imageString.size() );
+    memcpy(blob_data, imageString.data(), imageString.size());
+
+    mImageData = cairo_image_surface_create (cr_fmt, img_info.width, img_info.height);
+    cairo_surface_set_mime_data (mImageData, mime_type, blob_data, imageString.size(), free, blob_data);
 }
 
 float CairoSVGImageData::Width() const
 {
     if (!mImageData)
         return 0;
-    return static_cast<float>(mImageData.width);
+    return static_cast<float>( cairo_image_surface_get_width (mImageData) );
 }
 
-float SkiaSVGImageData::Height() const
+float CairoSVGImageData::Height() const
 {
     if (!mImageData)
         return 0;
-    return static_cast<float>(mImageData.height);
+    return static_cast<float>( cairo_image_surface_get_height (mImageData) );
 }
 
 CairoSVGRenderer::CairoSVGRenderer()
@@ -299,22 +306,21 @@ void CairoSVGRenderer::DrawImage(
     cairo_rectangle (mCanvas, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
 
     const CairoSVGImageData cairoSvgImgData = static_cast<const CairoSVGImageData&>(image);
-    int imgWidth = (int)cairoSvgImageData.Width();
-    int imgHeight = (int)cairoSvgImageData.Height();
-    int imgStride = (int)cairo_format_stride_for_width (cFmt, imgWidth);
-    
-    cairo_surface_t* cr = cairo_image_surface_create_for_data (cairoSvgImgData.mImageData.blob, cFmt, imgWidth, imgHeight, imgStride);
 
     mCanvas->drawImageRect(static_cast<const SkiaSVGImageData&>(image).mImageData,
         {fillArea.x, fillArea.y, fillArea.x + fillArea.width, fillArea.y + fillArea.height}, nullptr);
-    cairo_set_source_surface();
+    cairo_translate (mCanvas, fillArea.x, fillArea.y);
+    cairo_scale (mCanvas, fillArea.width / cairoSvgImgData.Width(), fillArea.height / cairoSvgImgData.Height() );
+    cairo_set_source_surface (mCanvas, cairoSvgImgData.mImageData, 0, 0);
+    cairo_paint (mCanvas);
+
     Restore();
 }
 
-void SkiaSVGRenderer::SetSkCanvas(SkCanvas* canvas)
+void CairoSVGRenderer::SetCairoSurface(cairo_surface_t* cr)
 {
-    SVG_ASSERT(canvas);
-    mCanvas = canvas;
+    SVG_ASSERT(cr);
+    mCanvas = cr;
 }
 
 } // namespace SVGNative
