@@ -280,15 +280,23 @@ void CairoSVGRenderer::DrawPath(
     {
         if (paint.type() == typeid(Gradient)) {
             cairo_pattern_t* pat;
-            CreateCairoPattern(const Paint& paint, float opacity, &pat);
-
+            CreateCairoPattern(fillStyle.paint, fillStyle.fillOpacity, &pat);
+            cairo_set_source(mSurface, pat);
         } else {
-            static_cast<uint8_t>(color[1] * 255), static_cast<uint8_t>(color[2] * 255)));
             cairo_set_source_rgba(mSurface, static_cast<uint8_t>(color[0] * 255),
                                             static_cast<uint8_t>(color[1] * 255),
                                             static_cast<uint8_t>(color[2] * 255),
                                             static_cast<uint8_t>(color[3] * 255));
-            cairo_set_fill_rule (mSurface, fr);
+        }
+
+        // Skia backend does not handle fillStyle.Rule yet
+        switch (fillStyle.Rule) {
+        case WindingRule::kEvenOdd:
+            cairo_set_fill_rule (mSurface, CAIRO_FILL_RULE_EVEN_ODD);
+            break;
+        case WindingRule::kNonZero:
+        default:
+            cairo_set_fill_rule (mSurface, CAIRO_FILL_RULE_WINDING);
         }
 
         cairo_new_path (mSurface);
