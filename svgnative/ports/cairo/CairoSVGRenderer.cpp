@@ -209,56 +209,66 @@ void CairoSVGRenderer::Restore()
     cairo_restore(mSurface);
 }
 
-inline void CreateSkPaint(const Paint& paint, float opacity, SkPaint& skPaint)
+inline void CreateCairoPattern(const Paint& paint, float opacity, cairo_pattern_t** pat)
 {
-    if (paint.type() == typeid(Color))
+    *pat = NULL;
+
+    if (paint.type() != typeid(Gradient))
+        return;
+
+    const auto& gradient = boost::get<Gradient>(paint);
+
+    // in Cairo, gradient type might be set before setting color stops. See
+    // https://www.cairographics.org/samples/gradient/
+    if (gradient.type == GradientType::kLinearGradient)
     {
-        const auto& color = boost::get<Color>(paint);
-        skPaint.setColor(SkColorSetARGB(static_cast<uint8_t>(opacity * color[3] * 255), static_cast<uint8_t>(color[0] * 255),
-            static_cast<uint8_t>(color[1] * 255), static_cast<uint8_t>(color[2] * 255)));
+        *pat = cairo_pattern_create_linear( gradient.x1, gradient.y1,
+                                            gradient.x2, gradient.y2 );
     }
-    else if (paint.type() == typeid(Gradient))
+    else if (gradient.type == GradientType::kRadialGradient)
     {
-        const auto& gradient = boost::get<Gradient>(paint);
-        std::vector<SkColor> colors;
-        std::vector<SkScalar> pos;
-        for (const auto& stop : gradient.colorStops)
-        {
-            pos.push_back(stop.first);
-            const auto& stopColor = stop.second;
-            colors.push_back(SkColorSetARGB(static_cast<uint8_t>(opacity * stopColor[3] * 255), static_cast<uint8_t>(stopColor[0] * 255),
-                static_cast<uint8_t>(stopColor[1] * 255), static_cast<uint8_t>(stopColor[2] * 255)));
-        }
-        SkShader::TileMode mode;
-        switch (gradient.method)
-        {
-        case SpreadMethod::kReflect:
-            mode = SkShader::TileMode::kMirror_TileMode;
-            break;
-        case SpreadMethod::kRepeat:
-            mode = SkShader::TileMode::kRepeat_TileMode;
-            break;
-        case SpreadMethod::kPad:
-        default:
-            mode = SkShader::TileMode::kClamp_TileMode;
-            break;
-        }
-        SkMatrix* matrix{};
-        if (gradient.transform)
-            matrix = &(static_cast<SkiaSVGTransform*>(gradient.transform.get())->mMatrix);
-        if (gradient.type == GradientType::kLinearGradient)
-        {
-            SkPoint points[2] = {SkPoint::Make(gradient.x1, gradient.y1), SkPoint::Make(gradient.x2, gradient.y2)};
-            skPaint.setShader(
-                SkGradientShader::MakeLinear(points, colors.data(), pos.data(), static_cast<int>(colors.size()), mode, 0, matrix));
-        }
-        else if (gradient.type == GradientType::kRadialGradient)
-        {
-            skPaint.setShader(
-                SkGradientShader::MakeTwoPointConical(SkPoint::Make(gradient.fx, gradient.fy), 0, SkPoint::Make(gradient.cx, gradient.cy),
-                    gradient.r, colors.data(), pos.data(), static_cast<int>(colors.size()), mode, 0, matrix));
-        }
+        *pat = cairo_pattern_create_radial( gradient.fx, gradient.fy, 0,
+                                            gradient.cx, gradient.cy, gradient.r );
+
     }
+    else // unknown GradientType
+        return;
+
+    // set transform matrix
+    if (gradient.transform)
+        cairo_pattern_set_matrix ( *pat, &(static_cast<CairoSVGTransform*>(gradient.transform.get())->mMatrix) );
+
+    // set "stop"s of gradient 
+    for (const auto& stop : gradient.colorStops)
+    {
+        // here, ColorStop is a pair of offset (in float) and color
+        const auto& stopOffset = stop.first;
+        const auto& stopColor = stop.second;
+
+        cairo_pattern_add_color_stop_rgba( *pat, stopOffset,
+                                           static_cast<uint8_t>(stopColor[0] * 255),
+                                           static_cast<uint8_t>(stopColor[1] * 255),
+                                           static_cast<uint8_t>(stopColor[2] * 255),
+                                           static_cast<uint8_t>(opacity * stopColor[3] * 255) );
+    }
+
+    // set the mode how to fill the wide area by a small pattern
+    switch (gradient.method)
+    {
+    case SpreadMethod::kReflect:
+        cairo_pattern_set_extend (*pat, CAIRO_EXTEND_REFLECT );
+        break;
+    case SpreadMethod::kRepeat:
+        cairo_pattern_set_extend (*pat, CAIRO_EXTEND_REPEAT );
+        break;
+    case SpreadMethod::kPad:
+        cairo_pattern_set_extend (*pat, CAIRO_EXTEND_PAD );
+        break;
+    default:
+        cairo_pattern_set_extend (*pat, CAIRO_EXTEND_NONE );
+        break;
+    }
+    return;
 }
 
 void CairoSVGRenderer::DrawPath(
@@ -268,8 +278,18 @@ void CairoSVGRenderer::DrawPath(
     Save(graphicStyle);
     if (fillStyle.hasFill)
     {
-        cairo_set_source_rgba(mSurface, r, g, b, a);
-        cairo_set_fill_rule (mSurface, fr);
+        if (paint.type() == typeid(Gradient)) {
+            cairo_pattern_t* pat;
+            CreateCairoPattern(const Paint& paint, float opacity, &pat);
+
+        } else {
+            static_cast<uint8_t>(color[1] * 255), static_cast<uint8_t>(color[2] * 255)));
+            cairo_set_source_rgba(mSurface, static_cast<uint8_t>(color[0] * 255),
+                                            static_cast<uint8_t>(color[1] * 255),
+                                            static_cast<uint8_t>(color[2] * 255),
+                                            static_cast<uint8_t>(color[3] * 255));
+            cairo_set_fill_rule (mSurface, fr);
+        }
 
         cairo_new_path (mSurface);
         cairo_append_path (mSurface, static_cast<const CairoSVGPath&>(path).mPath->path);
