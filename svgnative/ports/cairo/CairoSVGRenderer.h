@@ -100,8 +100,9 @@ public:
     void SetCairoSurface(cairo_surface_t* surface);
 
 private:
-    // following to the terminology of Skia, but Cairo does not use the term "canvas".
-    cairo_surface_t* mCanvas;
+    // Skia backend uses "mCanvas", CoreGraphics backend uses "mContext",
+    // we would be able to use Cairo-specific term for this one.
+    cairo_surface_t* mSurface;
 };
 
 } // namespace SVGNative
