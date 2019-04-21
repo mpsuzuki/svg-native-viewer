@@ -63,18 +63,6 @@ public:
     cairo_matrix_t mMatrix;
 };
 
-  // SkImage object has APIs to retrieve its metrics, but Cairo has no object
-  // type for that. Thus, we hold the image info, blob and its size. To postpone
-  // the decision of the appropriate encoding in the emission, JPEG is stored
-  // as JPEG, PNG is stored as PNG.
-  typedef struct _CairoMImageData {
-    ImageEncoding  encoding;
-    size_t         width;
-    size_t         height;
-    size_t         blob_size;
-    unsigned char* blob;
-  } CairoMImageData_t;
-
 class CairoSVGImageData final : public ImageData
 {
 public:
@@ -85,7 +73,7 @@ public:
     float Height() const override;
 
     
-    CairoMImageData_t mImageData;
+    cairo_surface_t mImageData;
 };
 
 class CairoSVGRenderer final : public SVGRenderer
