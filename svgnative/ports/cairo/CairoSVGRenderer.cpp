@@ -134,25 +134,47 @@ void CairoSVGTransform::Concat(const Transform& other) {
     cairo_matrix_init(&mMatrix, result.xx, result.yx, result.xy, result.yy, result.x0, result.y0); 
 }
 
-SkiaSVGImageData::SkiaSVGImageData(const std::string& base64, ImageEncoding /*encoding*/)
+CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding encoding)
 {
+    cairo_image_info_t  img_info = {0, 0, 0, 0};
     std::string imageString = base64_decode(base64);
-    auto skData = SkData::MakeWithCopy(imageString.data(), imageString.size());
-    mImageData = SkImage::MakeFromEncoded(skData);
+
+    mImageData.encoding = encoding;
+    mImageData.blob_size = imageString.size() + 1;
+
+    switch (encoding) {
+    case kJPEG:
+        if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_jpeg_info(&img_info, imageString.data(), imageString.size())) {
+            return;
+            mImageData.width = img_info.width;
+            mImageData.height = img_info.height;
+        };
+    case kPNG:
+        if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_png_info(&img_info, imageString.data(), imageString.size())) {
+            return;
+        };
+    default:
+            return;
+    };
+ 
+    mImageData.width = img_info.width;
+    mImageData.height = img_info.height;
+    mImageData.blob = new unsigned char[mImageData.blob_size];
+    memcpy(mImageData.blob, imageString.data(), imageString.size());
 }
 
-float SkiaSVGImageData::Width() const
+float CairoSVGImageData::Width() const
 {
     if (!mImageData)
         return 0;
-    return static_cast<float>(mImageData->width());
+    return static_cast<float>(mImageData.width);
 }
 
 float SkiaSVGImageData::Height() const
 {
     if (!mImageData)
         return 0;
-    return static_cast<float>(mImageData->height());
+    return static_cast<float>(mImageData.height);
 }
 
 SkiaSVGRenderer::SkiaSVGRenderer() {}
