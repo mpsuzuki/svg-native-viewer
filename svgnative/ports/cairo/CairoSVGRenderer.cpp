@@ -14,14 +14,6 @@ governing permissions and limitations under the License.
 #include "base64.h"
 #include "Config.h"
 #include "cairo.h"
-// #include "SkCanvas.h"
-// #include "SkData.h"
-// #include "SkGradientShader.h"
-// #include "SkImage.h"
-// #include "SkPoint.h"
-// #include "SkRect.h"
-// #include "SkRRect.h"
-// #include "SkShader.h"
 #include <math.h>
 
 namespace SVGNative
@@ -190,8 +182,8 @@ CairoSVGRenderer::CairoSVGRenderer()
 
 void CairoSVGRenderer::Save(const GraphicStyle& graphicStyle)
 {
-    SVG_ASSERT(mCanvas);
-    cairo_save(mCanvas);
+    SVG_ASSERT(mSurface);
+    cairo_save(mSurface);
     if (graphicStyle.opacity != 1.0)
         mCanvas->saveLayerAlpha(nullptr, graphicStyle.opacity);
     else
@@ -213,8 +205,8 @@ void CairoSVGRenderer::Save(const GraphicStyle& graphicStyle)
 
 void CairoSVGRenderer::Restore()
 {
-    SVG_ASSERT(mCanvas);
-    cairo_restore(mCanvas);
+    SVG_ASSERT(mSurface);
+    cairo_restore(mSurface);
 }
 
 inline void CreateSkPaint(const Paint& paint, float opacity, SkPaint& skPaint)
@@ -272,27 +264,27 @@ inline void CreateSkPaint(const Paint& paint, float opacity, SkPaint& skPaint)
 void CairoSVGRenderer::DrawPath(
     const Path& path, const GraphicStyle& graphicStyle, const FillStyle& fillStyle, const StrokeStyle& strokeStyle)
 {
-    SVG_ASSERT(mCanvas);
+    SVG_ASSERT(mSurface);
     Save(graphicStyle);
     if (fillStyle.hasFill)
     {
-        cairo_set_source_rgba(mCanvas, r, g, b, a);
-        cairo_set_fill_rule (mCanvas, fr);
+        cairo_set_source_rgba(mSurface, r, g, b, a);
+        cairo_set_fill_rule (mSurface, fr);
 
-        cairo_new_path (mCanvas);
-        cairo_append_path (mCanvas, static_cast<const CairoSVGPath&>(path).mPath->path);
-        cairo_fill (mCanvas);
+        cairo_new_path (mSurface);
+        cairo_append_path (mSurface, static_cast<const CairoSVGPath&>(path).mPath->path);
+        cairo_fill (mSurface);
     }
     if (strokeStyle.hasStroke)
     {
-        cairo_set_source_rgba(mCanvas, r, g, b, a);
-        cairo_set_line_width(mCanvas, lw);
-        cairo_set_line_cap(mCanvas, lc);
-        cairo_set_line_join(mCanvas, lj);
+        cairo_set_source_rgba(mSurface, r, g, b, a);
+        cairo_set_line_width(mSurface, lw);
+        cairo_set_line_cap(mSurface, lc);
+        cairo_set_line_join(mSurface, lj);
 
-        cairo_new_path (mCanvas);
-        cairo_append_path (mCanvas, static_cast<const CairoSVGPath&>(path).mPath->path);
-        cairo_stroke (mCanvas);
+        cairo_new_path (mSurface);
+        cairo_append_path (mSurface, static_cast<const CairoSVGPath&>(path).mPath->path);
+        cairo_stroke (mSurface);
     }
     Restore();
 }
@@ -300,19 +292,19 @@ void CairoSVGRenderer::DrawPath(
 void CairoSVGRenderer::DrawImage(
     const ImageData& image, const GraphicStyle& graphicStyle, const Rect& clipArea, const Rect& fillArea)
 {
-    SVG_ASSERT(mCanvas);
+    SVG_ASSERT(mSurface);
     Save(graphicStyle);
-    cairo_new_path (mCanvas);
-    cairo_rectangle (mCanvas, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
+    cairo_new_path (mSurface);
+    cairo_rectangle (mSurface, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
 
     const CairoSVGImageData cairoSvgImgData = static_cast<const CairoSVGImageData&>(image);
 
     mCanvas->drawImageRect(static_cast<const SkiaSVGImageData&>(image).mImageData,
         {fillArea.x, fillArea.y, fillArea.x + fillArea.width, fillArea.y + fillArea.height}, nullptr);
-    cairo_translate (mCanvas, fillArea.x, fillArea.y);
-    cairo_scale (mCanvas, fillArea.width / cairoSvgImgData.Width(), fillArea.height / cairoSvgImgData.Height() );
-    cairo_set_source_surface (mCanvas, cairoSvgImgData.mImageData, 0, 0);
-    cairo_paint (mCanvas);
+    cairo_translate (mSurface, fillArea.x, fillArea.y);
+    cairo_scale (mSurface, fillArea.width / cairoSvgImgData.Width(), fillArea.height / cairoSvgImgData.Height() );
+    cairo_set_source_surface (mSurface, cairoSvgImgData.mImageData, 0, 0);
+    cairo_paint (mSurface);
 
     Restore();
 }
@@ -320,7 +312,7 @@ void CairoSVGRenderer::DrawImage(
 void CairoSVGRenderer::SetCairoSurface(cairo_surface_t* cr)
 {
     SVG_ASSERT(cr);
-    mCanvas = cr;
+    mSurface = cr;
 }
 
 } // namespace SVGNative
