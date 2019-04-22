@@ -102,7 +102,10 @@ public:
 private:
     // Skia backend uses "mCanvas", CoreGraphics backend uses "mContext",
     // we would be able to use Cairo-specific term for this one.
-    cairo_surface_t* mSurface;
+    // however, Skia, CG's instance may have stackable layers which client
+    // can push or pop by Save() or Restore() APIs. Cairo has no such,
+    // so we have to use std::vector<cairo_surface_t*>
+    std::list<cairo_surface_t*> mSurfaces;
 };
 
 } // namespace SVGNative
