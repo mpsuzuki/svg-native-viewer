@@ -76,6 +76,11 @@ public:
     cairo_surface_t mImageData;
 };
 
+typedef struct _CairoSurfaceWithAlpha {
+    cairo_surface_t*  surface;
+    double            alpha;
+} CairoSurfaceWithAlpha_t;
+
 class CairoSVGRenderer final : public SVGRenderer
 {
 public:
@@ -105,7 +110,7 @@ private:
     // however, Skia, CG's instance may have stackable layers which client
     // can push or pop by Save() or Restore() APIs. Cairo has no such,
     // so we have to use std::vector<cairo_surface_t*>
-    std::list<cairo_surface_t*> mSurfaces;
+    std::list<CairoSurfaceWithAlpha_t> mSurfaces;
 };
 
 } // namespace SVGNative
