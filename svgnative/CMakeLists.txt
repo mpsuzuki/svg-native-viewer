@@ -151,6 +151,8 @@ if (USE_CAIRO)
 file(GLOB cairo_port
     ports/cairo/CairoSVGRenderer.h
     ports/cairo/CairoSVGRenderer.cpp
+    ../third_party/cpp-base64/base64.h
+    ../third_party/cpp-base64/base64.cpp
 )
 endif()
 
@@ -165,6 +167,7 @@ add_library(
     ${text_port}
     ${cg_port}
     ${skia_port}
+    ${cairo_port}
 )
 
 ##############################
@@ -193,7 +196,9 @@ target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/include/gpu")
 endif()
 if (USE_CAIRO)
-# XXX
+target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/ports/cairo")
+target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpp-base64")
+target_include_directories(SVGNativeViewerLib PUBLIC "/usr/include/cairo/")
 endif()
 
 ##############################
