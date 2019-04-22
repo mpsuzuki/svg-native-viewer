@@ -190,14 +190,29 @@ CairoSVGRenderer::CairoSVGRenderer()
 {
 }
 
+CairoSVGRenderer::~CairoSVGRenderer()
+{
+   for (const auto& cr : mSurfaces)
+   {
+      cairo_surface_finish ( cr );
+      cairo_surface_destroy ( cr );
+   }
+}
+
+// Save() method saves the rendering status, and reflect
+// the parameters passed by graphicStyle.
 void CairoSVGRenderer::Save(const GraphicStyle& graphicStyle)
 {
-    SVG_ASSERT(mSurface);
-    cairo_save(mSurface);
+    // SVG_ASSERT(mSurface);
+    cairo_save(mSurfaces.back);
+
+    mSurfaces.push_back( cairo_surface_create_similar ( mSurfaces.back,
+                                                        cairo_surface_get_content ( mSurfaces.back ),
+                                                        cairo_image_surface_get_width ( mSurfaces.back ),
+                                                        cairo_image_surface_get_height ( mSurfaces.back ) ) );
+
     if (graphicStyle.opacity != 1.0)
         mCanvas->saveLayerAlpha(nullptr, graphicStyle.opacity);
-    else
-        mCanvas->save();
     if (graphicStyle.transform)
         mCanvas->concat(static_cast<SkiaSVGTransform*>(graphicStyle.transform.get())->mMatrix);
     if (graphicStyle.clippingPath && graphicStyle.clippingPath->path)
@@ -215,8 +230,8 @@ void CairoSVGRenderer::Save(const GraphicStyle& graphicStyle)
 
 void CairoSVGRenderer::Restore()
 {
-    SVG_ASSERT(mSurface);
-    cairo_restore(mSurface);
+    SVG_ASSERT(mSurfaces.back);
+    cairo_restore(mSurfaces.back);
 }
 
 inline void CreateCairoPattern(const Paint& paint, float opacity, cairo_pattern_t** pat)
@@ -284,45 +299,46 @@ inline void CreateCairoPattern(const Paint& paint, float opacity, cairo_pattern_
 void CairoSVGRenderer::DrawPath(
     const Path& path, const GraphicStyle& graphicStyle, const FillStyle& fillStyle, const StrokeStyle& strokeStyle)
 {
-    SVG_ASSERT(mSurface);
+    SVG_ASSERT(mSurfaces.back);
     Save(graphicStyle);
     if (fillStyle.hasFill)
     {
         if (paint.type() == typeid(Gradient)) {
             cairo_pattern_t* pat;
             CreateCairoPattern(fillStyle.paint, fillStyle.fillOpacity, &pat);
-            cairo_set_source(mSurface, pat);
+            cairo_set_source(mSurfaces.back, pat);
         } else {
-            cairo_set_source_rgba(mSurface, static_cast<uint8_t>(color[0] * 255),
-                                            static_cast<uint8_t>(color[1] * 255),
-                                            static_cast<uint8_t>(color[2] * 255),
-                                            static_cast<uint8_t>(color[3] * 255));
+            cairo_set_source_rgba(mSurfaces.back,
+                                  static_cast<uint8_t>(color[0] * 255),
+                                  static_cast<uint8_t>(color[1] * 255),
+                                  static_cast<uint8_t>(color[2] * 255),
+                                  static_cast<uint8_t>(color[3] * 255));
         }
 
         // Skia backend does not handle fillStyle.Rule yet
         switch (fillStyle.Rule) {
         case WindingRule::kEvenOdd:
-            cairo_set_fill_rule (mSurface, CAIRO_FILL_RULE_EVEN_ODD);
+            cairo_set_fill_rule (mSurfaces.back, CAIRO_FILL_RULE_EVEN_ODD);
             break;
         case WindingRule::kNonZero:
         default:
-            cairo_set_fill_rule (mSurface, CAIRO_FILL_RULE_WINDING);
+            cairo_set_fill_rule (mSurfaces.back, CAIRO_FILL_RULE_WINDING);
         }
 
-        cairo_new_path (mSurface);
-        cairo_append_path (mSurface, static_cast<const CairoSVGPath&>(path).mPath->path);
-        cairo_fill (mSurface);
+        cairo_new_path (mSurfaces.back);
+        cairo_append_path (mSurfaces.back, static_cast<const CairoSVGPath&>(path).mPath->path);
+        cairo_fill (mSurfaces.back);
     }
     if (strokeStyle.hasStroke)
     {
-        cairo_set_source_rgba(mSurface, r, g, b, a);
-        cairo_set_line_width(mSurface, lw);
-        cairo_set_line_cap(mSurface, lc);
-        cairo_set_line_join(mSurface, lj);
+        cairo_set_source_rgba(mSurfaces.back, r, g, b, a);
+        cairo_set_line_width(mSurfaces.back, lw);
+        cairo_set_line_cap(mSurfaces.back, lc);
+        cairo_set_line_join(mSurfaces.back, lj);
 
-        cairo_new_path (mSurface);
-        cairo_append_path (mSurface, static_cast<const CairoSVGPath&>(path).mPath->path);
-        cairo_stroke (mSurface);
+        cairo_new_path (mSurfaces.back);
+        cairo_append_path (mSurfaces.back, static_cast<const CairoSVGPath&>(path).mPath->path);
+        cairo_stroke (mSurfaces.back);
     }
     Restore();
 }
@@ -330,19 +346,19 @@ void CairoSVGRenderer::DrawPath(
 void CairoSVGRenderer::DrawImage(
     const ImageData& image, const GraphicStyle& graphicStyle, const Rect& clipArea, const Rect& fillArea)
 {
-    SVG_ASSERT(mSurface);
+    SVG_ASSERT(mSurfaces.back);
     Save(graphicStyle);
-    cairo_new_path (mSurface);
-    cairo_rectangle (mSurface, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
+    cairo_new_path (mSurface.back);
+    cairo_rectangle (mSurfaces.back, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
 
     const CairoSVGImageData cairoSvgImgData = static_cast<const CairoSVGImageData&>(image);
 
     mCanvas->drawImageRect(static_cast<const SkiaSVGImageData&>(image).mImageData,
         {fillArea.x, fillArea.y, fillArea.x + fillArea.width, fillArea.y + fillArea.height}, nullptr);
-    cairo_translate (mSurface, fillArea.x, fillArea.y);
-    cairo_scale (mSurface, fillArea.width / cairoSvgImgData.Width(), fillArea.height / cairoSvgImgData.Height() );
-    cairo_set_source_surface (mSurface, cairoSvgImgData.mImageData, 0, 0);
-    cairo_paint (mSurface);
+    cairo_translate (mSurfaces.back, fillArea.x, fillArea.y);
+    cairo_scale (mSurfaces.back, fillArea.width / cairoSvgImgData.Width(), fillArea.height / cairoSvgImgData.Height() );
+    cairo_set_source_surface (mSurfaces.back, cairoSvgImgData.mImageData, 0, 0);
+    cairo_paint (mSurfaces.back);
 
     Restore();
 }
@@ -350,7 +366,7 @@ void CairoSVGRenderer::DrawImage(
 void CairoSVGRenderer::SetCairoSurface(cairo_surface_t* cr)
 {
     SVG_ASSERT(cr);
-    mSurface = cr;
+    mSurfaces.push_back( cr );
 }
 
 } // namespace SVGNative
