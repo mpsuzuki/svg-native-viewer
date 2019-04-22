@@ -18,7 +18,17 @@ governing permissions and limitations under the License.
 
 namespace SVGNative
 {
-CairoSVGPath::CairoSVGPath() {}
+CairoSVGPath::CairoSVGPath()
+{
+    mPath.cr = cairo_recording_surface_create ( CAIRO_CONTENT_COLOR_ALPHA, NULL );
+}
+
+CairoSVGPath::~CairoSVGPath()
+{
+    cairo_path_destroy ( mPath.path );
+    cairo_surface_finish ( mPath.cr );
+    cairo_surface_destroy ( mPath.cr );
+}
 
 void CairoSVGPath::Rect(float x, float y, float width, float height)
 {
@@ -93,7 +103,7 @@ void CairoSVGPath::CurveToV(float x2, float y2, float x3, float y3)
 }
 
 void CairoSVGPath::ClosePath() {
-    cairo_close_path (cr);
+    cairo_close_path (mPath.cr);
     mPath.path = cairo_copy_path (mPath.cr);
 }
 
