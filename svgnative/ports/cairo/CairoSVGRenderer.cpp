@@ -207,9 +207,10 @@ inline cairo_path_t* getTransformedClippingPath( const ClippingPath* clippingPat
         pathTransformed->num_data = path->num_data;
         pathTransformed->status = path->status;
         pathTransformed->data = (cairo_path_data_t*)malloc( path->num_data * sizeof( cairo_path_data_t ) );
-        for (int i = 0; i < pathTransformed->num_data; i += pathTransformed->data[i].header.length )
+        for (int i = 0; i < path->num_data; i += path->data[i].header.length )
         {
-            for (int j = 0; j < pathTransformed->data[i].header.length; j ++ )
+            pathTransformed->data[i].header = path->data[i].header;
+            for (int j = 0; j < path->data[i].header.length; j ++ )
             {
                 double x = path->data[i+1+j].point.x;
                 double y = path->data[i+1+j].point.y;
