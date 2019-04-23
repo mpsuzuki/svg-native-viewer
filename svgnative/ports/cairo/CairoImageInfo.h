@@ -36,6 +36,12 @@
 #ifndef CAIRO_IMAGE_INFO_PRIVATE_H
 #define CAIRO_IMAGE_INFO_PRIVATE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+
 typedef struct _cairo_image_info {
     int		 width;
     int		 height;
@@ -52,5 +58,22 @@ int
 _cairo_image_info_get_png_info (cairo_image_info_t	*info,
 				const unsigned char     *data,
 				unsigned long            length);
+
+/* Unaligned big endian access
+ */
+
+static inline uint16_t get_unaligned_be16 (const unsigned char *p)
+{
+    return p[0] << 8 | p[1];
+}
+
+static inline uint32_t get_unaligned_be32 (const unsigned char *p)
+{
+    return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
+}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CAIRO_IMAGE_INFO_PRIVATE_H */
