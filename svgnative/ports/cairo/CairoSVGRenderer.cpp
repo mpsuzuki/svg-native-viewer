@@ -191,7 +191,7 @@ CairoSVGRenderer::~CairoSVGRenderer()
 {
 }
 
-inline cairo_path_t* GetPathObjFromCairoSvgPath( const Path* path )
+inline cairo_path_t* getPathObjFromCairoSvgPath( const Path* path )
 {
     cairo_t* cr = static_cast<const CairoSVGPath*>(path)->mPath;
     return cairo_copy_path( cr );
@@ -199,7 +199,7 @@ inline cairo_path_t* GetPathObjFromCairoSvgPath( const Path* path )
 
 inline cairo_path_t* getTransformedClippingPath( const ClippingPath* clippingPath )
 {
-    cairo_path_t* path = GetPathObjFromCairoSvgPath( clippingPath->path.get() );
+    cairo_path_t* path = getPathObjFromCairoSvgPath( clippingPath->path.get() );
     if (clippingPath->transform)
     {
         cairo_matrix_t matrix = static_cast<const CairoSVGTransform*>(clippingPath->transform.get())->mMatrix;
@@ -261,7 +261,7 @@ inline double getAlphaProduct(std::list<double> alphas)
     return prod;
 }
 
-inline void CreateCairoPattern(const Paint& paint, float opacity, cairo_pattern_t** pat)
+inline void createCairoPattern(const Paint& paint, float opacity, cairo_pattern_t** pat)
 {
     *pat = NULL;
 
@@ -323,9 +323,9 @@ inline void CreateCairoPattern(const Paint& paint, float opacity, cairo_pattern_
     return;
 }
 
-inline void AppendCairoSvgPath( cairo_t* mCairo, const Path& path )
+inline void appendCairoSvgPath( cairo_t* mCairo, const Path& path )
 {
-    cairo_append_path (mCairo, GetPathObjFromCairoSvgPath(&path) );
+    cairo_append_path (mCairo, getPathObjFromCairoSvgPath(&path) );
 }
 
 void CairoSVGRenderer::DrawPath(
@@ -340,7 +340,7 @@ void CairoSVGRenderer::DrawPath(
     {
         if (fillStyle.paint.type() == typeid(Gradient)) {
             cairo_pattern_t* pat;
-            CreateCairoPattern(fillStyle.paint, fillStyle.fillOpacity * alpha, &pat);
+            createCairoPattern(fillStyle.paint, fillStyle.fillOpacity * alpha, &pat);
             cairo_set_source(mCairo, pat);
         } else {
             const auto& color = boost::get<Color>(fillStyle.paint);
@@ -362,7 +362,7 @@ void CairoSVGRenderer::DrawPath(
         }
 
         cairo_new_path (mCairo);
-        AppendCairoSvgPath( mCairo, path );
+        appendCairoSvgPath( mCairo, path );
         cairo_fill (mCairo);
     }
     if (strokeStyle.hasStroke)
@@ -400,7 +400,7 @@ void CairoSVGRenderer::DrawPath(
         }
 
         cairo_new_path (mCairo);
-        AppendCairoSvgPath( mCairo, path );
+        appendCairoSvgPath( mCairo, path );
         cairo_stroke (mCairo);
     }
     Restore();
