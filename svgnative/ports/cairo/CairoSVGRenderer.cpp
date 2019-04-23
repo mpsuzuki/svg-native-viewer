@@ -426,11 +426,10 @@ void CairoSVGRenderer::DrawImage(
     Restore();
 }
 
-void CairoSVGRenderer::SetCairoSurface(cairo_surface_t* surface)
+void CairoSVGRenderer::SetCairo(cairo_t* cr)
 {
-    SVG_ASSERT(surface);
-    mSurface = surface;
-    mCairo = cairo_create(mSurface);
+    SVG_ASSERT(cr);
+    mCairo = cr;
 }
 
 } // namespace SVGNative
