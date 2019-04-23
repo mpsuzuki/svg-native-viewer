@@ -96,11 +96,10 @@ public:
     void DrawPath(const Path& path, const GraphicStyle& graphicStyle, const FillStyle& fillStyle, const StrokeStyle& strokeStyle) override;
     void DrawImage(const ImageData& image, const GraphicStyle& graphicStyle, const Rect& clipArea, const Rect& fillArea) override;
 
-    void SetCairoSurface(cairo_surface_t* surface);
+    void SetCairo(cairo_t* cairo);
 
 private:
     std::list<double> alphas;
-    cairo_surface_t* mSurface;
     cairo_t* mCairo;
 };
 
