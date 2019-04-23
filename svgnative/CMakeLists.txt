@@ -139,6 +139,8 @@ if (USE_CAIRO)
 file(GLOB cairo_port
     ports/cairo/CairoSVGRenderer.h
     ports/cairo/CairoSVGRenderer.cpp
+    ports/cairo/CairoImageInfo.h
+    ports/cairo/CairoImageInfo.c
     ../third_party/cpp-base64/base64.h
     ../third_party/cpp-base64/base64.cpp
 )
@@ -204,7 +206,7 @@ target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_p
 endif()
 endif()
 if (USE_CAIRO)
-# XXX
+target_link_libraries(SVGNativeViewerLib "-lcairo")
 endif()
 
 set_target_properties(SVGNativeViewerLib PROPERTIES LINKER_LANGUAGE CXX)
