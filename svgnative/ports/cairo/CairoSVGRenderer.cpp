@@ -15,27 +15,30 @@ governing permissions and limitations under the License.
 #include "Config.h"
 #include "cairo.h"
 #include <math.h>
+#include "CairoImageInfo.h"
 
 namespace SVGNative
 {
 CairoSVGPath::CairoSVGPath()
 {
-    mPath.cr = cairo_recording_surface_create ( CAIRO_CONTENT_COLOR_ALPHA, NULL );
+    cairo_surface_t* sf = cairo_recording_surface_create ( CAIRO_CONTENT_COLOR_ALPHA, NULL );
+    mPath = cairo_create (sf);
 }
 
 CairoSVGPath::~CairoSVGPath()
 {
-    cairo_path_destroy ( mPath.path );
-    cairo_surface_finish ( mPath.cr );
-    cairo_surface_destroy ( mPath.cr );
+    cairo_surface_t* sf = cairo_get_target( mPath );
+
+    cairo_destroy ( mPath );
+    cairo_surface_finish ( sf );
+    cairo_surface_destroy ( sf );
 }
 
 void CairoSVGPath::Rect(float x, float y, float width, float height)
 {
-    cairo_new_sub_path (mPath.cr);
-    cairo_rectangle (mPath.cr, x, y, width, height);
-    cairo_close_path (mPath.cr);
-    mPath.path = cairo_copy_path (mPath.cr);
+    cairo_new_sub_path ( mPath );
+    cairo_rectangle ( mPath, x, y, width, height );
+    cairo_close_path ( mPath );
 }
 
 void CairoSVGPath::RoundedRect(float x, float y, float width, float height, float cornerRadius)
@@ -47,13 +50,12 @@ void CairoSVGPath::RoundedRect(float x, float y, float width, float height, floa
     double    radius = cornerRadius / aspect;
     double    degrees = M_PI / 180.0;
 
-    cairo_new_sub_path (mPath.cr);
-    cairo_arc (mPath.cr, x + width - radius, y + radius,          radius, -90 * degrees,   0 * degrees);
-    cairo_arc (mPath.cr, x + width - radius, y + height - radius, radius,   0 * degrees,  90 * degrees);
-    cairo_arc (mPath.cr, x + radius,         y + height - radius, radius,  90 * degrees, 180 * degrees);
-    cairo_arc (mPath.cr, x + radius,         y + radius,          radius, 180 * degrees, 270 * degrees);
-    cairo_close_path (mPath.cr);
-    mPath.path = cairo_copy_path (mPath.cr);
+    cairo_new_sub_path ( mPath );
+    cairo_arc ( mPath, x + width - radius, y + radius,          radius, -90 * degrees,   0 * degrees);
+    cairo_arc ( mPath, x + width - radius, y + height - radius, radius,   0 * degrees,  90 * degrees);
+    cairo_arc ( mPath, x + radius,         y + height - radius, radius,  90 * degrees, 180 * degrees);
+    cairo_arc ( mPath, x + radius,         y + radius,          radius, 180 * degrees, 270 * degrees);
+    cairo_close_path ( mPath );
 }
 
 void CairoSVGPath::Ellipse(float cx, float cy, float rx, float ry) {
@@ -61,50 +63,45 @@ void CairoSVGPath::Ellipse(float cx, float cy, float rx, float ry) {
     // https://cairographics.org/cookbook/ellipses/
 
     cairo_matrix_t  save_matrix;
-    cairo_get_matrix (mPath.cr, &save_matrix); 
+    cairo_get_matrix ((cairo_t*)mPath, &save_matrix); 
 
-    cairo_translate (mPath.cr, cx, cy);
-    cairo_scale (mPath.cr, rx, ry);
-    cairo_arc (mPath.cr, 0, 0, 1, 0, 2 * M_PI);
+    cairo_translate ((cairo_t*)mPath, cx, cy);
+    cairo_scale ((cairo_t*)mPath, rx, ry);
+    cairo_arc ((cairo_t*)mPath, 0, 0, 1, 0, 2 * M_PI);
 
-    cairo_set_matrix (mPath.cr, &save_matrix); 
-    mPath.path = cairo_copy_path (mPath.cr);
+    cairo_set_matrix ((cairo_t*)mPath, &save_matrix); 
 }
 
 void CairoSVGPath::MoveTo(float x, float y)
 {
-    cairo_move_to (mPath.cr, x, y);
+    cairo_move_to ((cairo_t*)mPath, x, y);
     mCurrentX = x;
     mCurrentY = y;
 }
 
 void CairoSVGPath::LineTo(float x, float y)
 {
-    cairo_line_to (mPath.cr, x, y);
+    cairo_line_to ((cairo_t*)mPath, x, y);
     mCurrentX = x;
     mCurrentY = y;
-    mPath.path = cairo_copy_path (mPath.cr);
 }
 
 void CairoSVGPath::CurveTo(float x1, float y1, float x2, float y2, float x3, float y3)
 {
-    cairo_curve_to (mPath.cr, x1, y1, x2, y2, x3, y3);
+    cairo_curve_to ((cairo_t*)mPath, x1, y1, x2, y2, x3, y3);
     mCurrentX = x3;
     mCurrentY = y3;
-    mPath.path = cairo_copy_path (mPath.cr);
 }
 
 void CairoSVGPath::CurveToV(float x2, float y2, float x3, float y3)
 {
-    cairo_curve_to (mPath.cr, mCurrentX, mCurrentY, x2, y2, x3, y3);
+    cairo_curve_to (mPath, mCurrentX, mCurrentY, x2, y2, x3, y3);
     mCurrentX = x3;
     mCurrentY = y3;
-    mPath.path = cairo_copy_path (mPath.cr);
 }
 
 void CairoSVGPath::ClosePath() {
-    cairo_close_path (mPath.cr);
-    mPath.path = cairo_copy_path (mPath.cr);
+    cairo_close_path (mPath);
 }
 
 CairoSVGTransform::CairoSVGTransform(float a, float b, float c, float d, float tx, float ty) {
@@ -144,14 +141,14 @@ CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding en
     std::string imageString = base64_decode(base64);
 
     switch (encoding) {
-    case kJPEG:
-        if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_jpeg_info(&img_info, imageString.data(), imageString.size())) {
+    case ImageEncoding::kJPEG:
+        if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_jpeg_info(&img_info, (unsigned char*)imageString.data(), imageString.size())) {
             return;
         };
         strncpy(mime_type, CAIRO_MIME_TYPE_JPEG, sizeof(mime_type));
         break;
-    case kPNG:
-        if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_png_info(&img_info, imageString.data(), imageString.size())) {
+    case ImageEncoding::kPNG:
+        if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_png_info(&img_info, (unsigned char*)imageString.data(), imageString.size())) {
             return;
         };
         strncpy(mime_type, CAIRO_MIME_TYPE_PNG, sizeof(mime_type));
@@ -165,11 +162,11 @@ CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding en
         cr_fmt = CAIRO_FORMAT_ARGB32;
     };
 
-    void* blob_data = malloc( imageString.size() );
-    memcpy(blob_data, imageString.data(), imageString.size());
+    const unsigned char* blob_data = (const unsigned char*)malloc( imageString.size() );
+    memcpy((void *)blob_data, imageString.data(), imageString.size());
 
     mImageData = cairo_image_surface_create (cr_fmt, img_info.width, img_info.height);
-    cairo_surface_set_mime_data (mImageData, mime_type, blob_data, imageString.size(), free, blob_data);
+    cairo_surface_set_mime_data (mImageData, mime_type, blob_data, imageString.size(), free, (void*)blob_data);
 }
 
 float CairoSVGImageData::Width() const
@@ -192,81 +189,76 @@ CairoSVGRenderer::CairoSVGRenderer()
 
 CairoSVGRenderer::~CairoSVGRenderer()
 {
-   for (const auto& cr : mSurfaces)
-   {
-      cairo_surface_finish ( cr );
-      cairo_surface_destroy ( cr );
-   }
 }
 
-// Save() method saves the rendering status, and reflect
-// the parameters passed by graphicStyle.
+inline cairo_path_t* GetPathObjFromCairoSvgPath( const Path* path )
+{
+    cairo_t* cr = static_cast<const CairoSVGPath*>(path)->mPath;
+    return cairo_copy_path( cr );
+}
+
+inline cairo_path_t* getTransformedClippingPath( const ClippingPath* clippingPath )
+{
+    cairo_path_t* path = GetPathObjFromCairoSvgPath( clippingPath->path.get() );
+    if (clippingPath->transform)
+    {
+        cairo_matrix_t matrix = static_cast<const CairoSVGTransform*>(clippingPath->transform.get())->mMatrix;
+        cairo_path_t* pathTransformed = (cairo_path_t*)malloc( sizeof( cairo_path_t ) );
+        pathTransformed->num_data = path->num_data;
+        pathTransformed->status = path->status;
+        pathTransformed->data = (cairo_path_data_t*)malloc( path->num_data * sizeof( cairo_path_data_t ) );
+        for (int i = 0; i < pathTransformed->num_data; i += pathTransformed->data[i].header.length )
+        {
+            for (int j = 0; j < pathTransformed->data[i].header.length; j ++ )
+            {
+                double x = path->data[i+1+j].point.x;
+                double y = path->data[i+1+j].point.y;
+                cairo_matrix_transform_point( &matrix, &x, &y );
+                pathTransformed->data[i+1+j].point.x = x;
+                pathTransformed->data[i+1+j].point.y = y;
+            }
+        }
+        cairo_path_destroy( path );
+        return pathTransformed;
+    } else
+        return path;
+}
+
 void CairoSVGRenderer::Save(const GraphicStyle& graphicStyle)
 {
-    cairo_surface_t* lastSurface = mSurfaces.back.surface;
-    // SVG_ASSERT(mSurface);
-    cairo_save(lastSurface);
+    SVG_ASSERT( mCairo );
+    cairo_save ( mCairo );
 
-    // Skia backend adds new layer with alpha channel conditionally,
-    // but CoreGraphics backend adds new layer always.
-    cairo_surface_t* curSurface = cairo_surface_create_similar ( lastSurface,
-                                                                 cairo_surface_get_content ( lastSurface ),
-                                                                 cairo_image_surface_get_width ( lastSurface ),
-                                                                 cairo_image_surface_get_height ( lastSurface ) );
-
-    mSurfaces.emplace_back({ curSurface, graphicStyle.opacity });
     if (graphicStyle.transform)
-        cairo_transform( curSurface, static_cast<SkiaSVGTransform*>(graphicStyle.transform.get())->mMatrix);
-
-    // Cairo has no API to transform the existing path object.
-    // We have to set yet another surface with inversed matrix,
-    // draw a path, and retrieve the path under original matrix.
-    // NOTE: clippingPath may have its own transform matrix.
+        cairo_transform( mCairo, &(static_cast<CairoSVGTransform*>(graphicStyle.transform.get())->mMatrix));
 
     if (graphicStyle.clippingPath && graphicStyle.clippingPath->path)
     {
-        cairo_path_t* path = static_cast<const CairoSVGPath*>(graphicStyle.clippingPath->path.get())->mPath.path;
-        if (graphicStyle.clippingPath->transform)
-        {
-            cairo_matrix_t matrix = static_cast<const CairoSVGTransform*>(graphicStyle.clippingPath->transform.get())->mMatrix;
-            cairo_path_t* pathTransformed = malloc( sizeof( cairo_path_t ) );
-            pathTransformed->num_data = path->num_data;
-            pathTransformed->status = path->status;
-            pathTransformed->data = malloc( num_data * sizeof( cairo_path_data_t ) );
-            for (int i = 0; i < pathTransformed->num_data; i += pathTransformed->data[i].header.length )
-            {
-                for (int j = 0; j < pathTransformed->data[i].header.length; j ++ )
-                {
-                    double x = path->data[i+1+j].point.x;
-                    double y = path->data[i+1+j].point.y;
-                    cairo_matrix_transform_point( &matrix, &x, &y );
-                    pathTransformed->data[i+1+j].point.x = x;
-                    pathTransformed->data[i+1+j].point.y = y;
-                }
-            }
-            cairo_append_path( curSurface, pathTransformed );
-        } else {
-            cairo_append_path( curSurface, path );
-        }
-        cairo_clip( curSurface );
+        cairo_path_t* path = getTransformedClippingPath( graphicStyle.clippingPath.get() );
+        cairo_append_path( mCairo, path );
+        cairo_clip( mCairo );
         // FIXME: Cairo has no API to control winding/even-odd clipping. See
         // https://lists.cairographics.org/archives/cairo/2009-September/018104.html
     }
+
+    alphas.push_back( graphicStyle.opacity );
 }
 
 void CairoSVGRenderer::Restore()
 {
-    // SVG_ASSERT(curSurface);
-    cairo_surface_t* curSurface = mSurfaces.back.surface;
-    double alpha = mSurfaces.back.alpha;
-    mSurfaces.pop_back();
-    cairo_surface_t* lastSurface = mSurfaces.back.surface;
-    cairo_set_source_surface( lastSurface, curSurface, 0, 0 );
-    cairo_paint_with_alpha( lastSurface, alpha );
-    cairo_surface_finish( curSurface );
-    cairo_surface_destroy( curSurface );
+    SVG_ASSERT( mCairo );
+    alphas.pop_back();
+    cairo_restore( mCairo );
+}
 
-    cairo_restore( lastSurface );
+inline double getAlphaProduct(std::list<double> alphas)
+{
+    double prod = 1.0;
+
+    for (double a : alphas)
+        prod = prod * a;
+
+    return prod;
 }
 
 inline void CreateCairoPattern(const Paint& paint, float opacity, cairo_pattern_t** pat)
@@ -331,51 +323,85 @@ inline void CreateCairoPattern(const Paint& paint, float opacity, cairo_pattern_
     return;
 }
 
+inline void AppendCairoSvgPath( cairo_t* mCairo, const Path& path )
+{
+    cairo_append_path (mCairo, GetPathObjFromCairoSvgPath(&path) );
+}
+
 void CairoSVGRenderer::DrawPath(
     const Path& path, const GraphicStyle& graphicStyle, const FillStyle& fillStyle, const StrokeStyle& strokeStyle)
 {
-    cairo_surface_t* curSurface = mSurfaces.back.surface;
-
-    SVG_ASSERT(curSurface);
+    SVG_ASSERT(mCairo);
     Save(graphicStyle);
+
+    double alpha = getAlphaProduct( alphas );
+
     if (fillStyle.hasFill)
     {
-        if (paint.type() == typeid(Gradient)) {
+        if (fillStyle.paint.type() == typeid(Gradient)) {
             cairo_pattern_t* pat;
-            CreateCairoPattern(fillStyle.paint, fillStyle.fillOpacity, &pat);
-            cairo_set_source(curSurface, pat);
+            CreateCairoPattern(fillStyle.paint, fillStyle.fillOpacity * alpha, &pat);
+            cairo_set_source(mCairo, pat);
         } else {
-            cairo_set_source_rgba(curSurface,
+            const auto& color = boost::get<Color>(fillStyle.paint);
+            cairo_set_source_rgba(mCairo,
                                   static_cast<uint8_t>(color[0] * 255),
                                   static_cast<uint8_t>(color[1] * 255),
                                   static_cast<uint8_t>(color[2] * 255),
-                                  static_cast<uint8_t>(color[3] * 255));
+                                  static_cast<uint8_t>(color[3] * 255 * fillStyle.fillOpacity * alpha ));
         }
 
         // Skia backend does not handle fillStyle.Rule yet
-        switch (fillStyle.Rule) {
+        switch (fillStyle.fillRule) {
         case WindingRule::kEvenOdd:
-            cairo_set_fill_rule (curSurface, CAIRO_FILL_RULE_EVEN_ODD);
+            cairo_set_fill_rule (mCairo, CAIRO_FILL_RULE_EVEN_ODD);
             break;
         case WindingRule::kNonZero:
         default:
-            cairo_set_fill_rule (curSurface, CAIRO_FILL_RULE_WINDING);
+            cairo_set_fill_rule (mCairo, CAIRO_FILL_RULE_WINDING);
         }
 
-        cairo_new_path (curSurface);
-        cairo_append_path (curSurface, static_cast<const CairoSVGPath&>(path).mPath->path);
-        cairo_fill (curSurface);
+        cairo_new_path (mCairo);
+        AppendCairoSvgPath( mCairo, path );
+        cairo_fill (mCairo);
     }
     if (strokeStyle.hasStroke)
     {
-        cairo_set_source_rgba(curSurface, r, g, b, a);
-        cairo_set_line_width(curSurface, lw);
-        cairo_set_line_cap(curSurface, lc);
-        cairo_set_line_join(curSurface, lj);
+        const auto& color = boost::get<Color>(strokeStyle.paint);
+        cairo_set_source_rgba(mCairo,
+                              static_cast<uint8_t>(color[0] * 255),
+                              static_cast<uint8_t>(color[1] * 255),
+                              static_cast<uint8_t>(color[2] * 255),
+                              static_cast<uint8_t>(color[3] * 255 * strokeStyle.strokeOpacity * alpha ));
 
-        cairo_new_path (curSurface);
-        cairo_append_path (curSurface, static_cast<const CairoSVGPath&>(path).mPath->path);
-        cairo_stroke (curSurface);
+        cairo_set_line_width(mCairo, strokeStyle.lineWidth);
+        switch (strokeStyle.lineCap) {
+        case LineCap::kRound:
+            cairo_set_line_cap(mCairo, CAIRO_LINE_CAP_ROUND);
+            break;
+        case LineCap::kSquare:
+            cairo_set_line_cap(mCairo, CAIRO_LINE_CAP_SQUARE);
+            break;
+        case LineCap::kButt:
+        default:
+            cairo_set_line_cap(mCairo, CAIRO_LINE_CAP_BUTT);
+        }
+
+        switch (strokeStyle.lineJoin) {
+	case LineJoin::kRound:
+	    cairo_set_line_join(mCairo, CAIRO_LINE_JOIN_ROUND);
+            break;
+	case LineJoin::kBevel:
+	    cairo_set_line_join(mCairo, CAIRO_LINE_JOIN_BEVEL);
+            break;
+	case LineJoin::kMiter:
+	default:
+	    cairo_set_line_join(mCairo, CAIRO_LINE_JOIN_MITER);
+        }
+
+        cairo_new_path (mCairo);
+        AppendCairoSvgPath( mCairo, path );
+        cairo_stroke (mCairo);
     }
     Restore();
 }
@@ -383,29 +409,28 @@ void CairoSVGRenderer::DrawPath(
 void CairoSVGRenderer::DrawImage(
     const ImageData& image, const GraphicStyle& graphicStyle, const Rect& clipArea, const Rect& fillArea)
 {
-    cairo_surface_t* curSurface = mSurfaces.back.surface;
+    double alpha = getAlphaProduct( alphas );
 
-    SVG_ASSERT(curSurface);
+    SVG_ASSERT(mCairo);
     Save(graphicStyle);
-    cairo_new_path (curSurface);
-    cairo_rectangle (curSurface, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
+    cairo_new_path (mCairo);
+    cairo_rectangle (mCairo, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
 
     const CairoSVGImageData cairoSvgImgData = static_cast<const CairoSVGImageData&>(image);
 
-    mCanvas->drawImageRect(static_cast<const SkiaSVGImageData&>(image).mImageData,
-        {fillArea.x, fillArea.y, fillArea.x + fillArea.width, fillArea.y + fillArea.height}, nullptr);
-    cairo_translate (curSurface, fillArea.x, fillArea.y);
-    cairo_scale (curSurface, fillArea.width / cairoSvgImgData.Width(), fillArea.height / cairoSvgImgData.Height() );
-    cairo_set_source_surface (curSurface, cairoSvgImgData.mImageData, 0, 0);
-    cairo_paint (curSurface);
+    cairo_translate (mCairo, fillArea.x, fillArea.y);
+    cairo_scale (mCairo, fillArea.width / cairoSvgImgData.Width(), fillArea.height / cairoSvgImgData.Height() );
+    cairo_set_source_surface (mCairo, cairoSvgImgData.mImageData, 0, 0);
+    cairo_paint_with_alpha (mCairo, alpha);
 
     Restore();
 }
 
-void CairoSVGRenderer::SetCairoSurface(cairo_surface_t* cr)
+void CairoSVGRenderer::SetCairoSurface(cairo_surface_t* surface)
 {
-    SVG_ASSERT(cr);
-    mSurfaces.emplace_back({cr, 0});
+    SVG_ASSERT(surface);
+    mSurface = surface;
+    mCairo = cairo_create(mSurface);
 }
 
 } // namespace SVGNative

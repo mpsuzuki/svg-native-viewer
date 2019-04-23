@@ -13,6 +13,7 @@ governing permissions and limitations under the License.
 #ifndef SVGViewer_CairoSVGRenderer_h
 #define SVGViewer_CairoSVGRenderer_h
 
+#include <list>
 #include "SVGRenderer.h"
 #include "cairo.h"
 
@@ -20,17 +21,14 @@ namespace SVGNative
 {
 
   // SkiaSVGPath object is able to be amended, but Cairo has no API to append something
-  // to existing cairo_path_t object. Thus, we hold both of an opaque cairo_t surface and
-  // cairo_path_t.
-  typedef struct _CairoMPath {
-    cairo_path_t*  path;
-    cairo_t*       cr;
-  } CairoMPath_t;
+  // to existing cairo_path_t object. Thus, we hold cairo_t object. Its surface could
+  // be retrieved in later, by cairo_get_target().
 
 class CairoSVGPath final : public Path
 {
 public:
     CairoSVGPath();
+    ~CairoSVGPath();
 
     void Rect(float x, float y, float width, float height) override;
     void RoundedRect(float x, float y, float width, float height, float cornerRadius) override;
@@ -42,7 +40,7 @@ public:
     void CurveToV(float x2, float y2, float x3, float y3) override;
     void ClosePath() override;
 
-    CairoMPath_t mPath;
+    cairo_t* mPath; // FIXME: rename it to mCairo in future
 
 private:
     float mCurrentX{};
@@ -73,18 +71,14 @@ public:
     float Height() const override;
 
     
-    cairo_surface_t mImageData;
+    cairo_surface_t* mImageData;
 };
-
-typedef struct _CairoSurfaceWithAlpha {
-    cairo_surface_t*  surface;
-    double            alpha;
-} CairoSurfaceWithAlpha_t;
 
 class CairoSVGRenderer final : public SVGRenderer
 {
 public:
     CairoSVGRenderer();
+    ~CairoSVGRenderer();
 
     std::unique_ptr<ImageData> CreateImageData(const std::string& base64, ImageEncoding encoding) override { return std::make_unique<CairoSVGImageData>(base64, encoding); }
 
@@ -105,12 +99,9 @@ public:
     void SetCairoSurface(cairo_surface_t* surface);
 
 private:
-    // Skia backend uses "mCanvas", CoreGraphics backend uses "mContext",
-    // we would be able to use Cairo-specific term for this one.
-    // however, Skia, CG's instance may have stackable layers which client
-    // can push or pop by Save() or Restore() APIs. Cairo has no such,
-    // so we have to use std::vector<cairo_surface_t*>
-    std::list<CairoSurfaceWithAlpha_t> mSurfaces;
+    std::list<double> alphas;
+    cairo_surface_t* mSurface;
+    cairo_t* mCairo;
 };
 
 } // namespace SVGNative
