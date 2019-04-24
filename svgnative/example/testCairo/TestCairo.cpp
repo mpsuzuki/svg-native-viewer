@@ -43,7 +43,11 @@ int main(int argc, char* const argv[])
 
     auto doc = std::unique_ptr<SVGNative::SVGDocument>(SVGNative::SVGDocument::CreateSVGDocument(svgInput.c_str(), renderer));
 
-    auto cairoSurface = cairo_recording_surface_create( CAIRO_CONTENT_COLOR_ALPHA, NULL );
+    cairo_rectangle_t docExtents = { 0, 0, 0, 0 };
+    docExtents.width = doc->Width();
+    docExtents.height = doc->Height();
+
+    auto cairoSurface = cairo_recording_surface_create( CAIRO_CONTENT_COLOR_ALPHA, &docExtents );
     auto cairoContext = cairo_create( cairoSurface );
 
     renderer->SetCairo( cairoContext );
