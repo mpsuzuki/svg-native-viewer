@@ -80,14 +80,14 @@ public:
     CairoSVGRenderer();
     ~CairoSVGRenderer();
 
-    std::unique_ptr<ImageData> CreateImageData(const std::string& base64, ImageEncoding encoding) override { return std::make_unique<CairoSVGImageData>(base64, encoding); }
+    std::unique_ptr<ImageData> CreateImageData(const std::string& base64, ImageEncoding encoding) override { return std::unique_ptr<CairoSVGImageData>(new CairoSVGImageData(base64, encoding)); }
 
-    std::unique_ptr<Path> CreatePath() override { return std::make_unique<CairoSVGPath>(); }
+    std::unique_ptr<Path> CreatePath() override { return std::unique_ptr<CairoSVGPath>(new CairoSVGPath); }
 
     std::unique_ptr<Transform> CreateTransform(
         float a = 1.0, float b = 0.0, float c = 0.0, float d = 1.0, float tx = 0.0, float ty = 0.0) override
     {
-        return std::make_unique<CairoSVGTransform>(a, b, c, d, tx, ty);
+        return std::unique_ptr<CairoSVGTransform>(new CairoSVGTransform(a, b, c, d, tx, ty));
     }
 
     void Save(const GraphicStyle& graphicStyle) override;
