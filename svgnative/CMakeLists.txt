@@ -11,7 +11,7 @@ cmake --build build/win64 --config Release
 cmake_minimum_required(VERSION 3.5.0)
 project(SVGNativeViewer)
 enable_language(CXX)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 message(STATUS "CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
 message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
@@ -31,7 +31,7 @@ option(SKIA "Enable Skia port")
 
 CMAKE_DEPENDENT_OPTION(USE_TEXT "Text port for testing" TRUE "TEXT" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CG "CoreGraphics needs to be enabled and run on macOS/iOS" TRUE "APPLE;CG" FALSE)
-CMAKE_DEPENDENT_OPTION(USE_SKIA "Skia" TRUE "APPLE;SKIA" FALSE)
+CMAKE_DEPENDENT_OPTION(USE_SKIA "Skia" TRUE "SKIA" FALSE)
 
 CMAKE_DEPENDENT_OPTION(USE_TEXT_EXAMPLE "Text port for testing" TRUE "NOT LIB_ONLY;TEXT" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CG_EXAMPLE "CoreGraphics needs to be enabled and run on macOS/iOS" TRUE "NOT LIB_ONLY;USE_CG" FALSE)
@@ -117,6 +117,8 @@ if (USE_SKIA)
 file(GLOB skia_port
     ports/skia/SkiaSVGRenderer.h
     ports/skia/SkiaSVGRenderer.cpp
+    ../third_party/cpp-base64/base64.h
+    ../third_party/cpp-base64/base64.cpp
 )
 endif()
 
@@ -154,6 +156,8 @@ target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/include/effects")
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/include/encode")
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/include/gpu")
+target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/third_party/skcms")
+target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpp-base64")
 endif()
 
 ##############################
