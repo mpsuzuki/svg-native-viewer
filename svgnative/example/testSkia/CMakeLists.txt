@@ -9,9 +9,9 @@ target_include_directories(testSkia PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../po
 
 if(MSVC)
 target_link_libraries(testSkia PUBLIC SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/skia/lib/skia.lib")
-else()
-target_link_libraries(testSkia PUBLIC SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/skia/lib/osx/libskia.a")
-if (APPLE)
+elseif(APPLE)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework Cocoa")
-endif()
+target_link_libraries(testSkia PUBLIC SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/skia/lib/osx/libskia.a")
+else()
+target_link_libraries(testSkia PUBLIC SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/skia/out/Shared/libskia.so")
 endif()
