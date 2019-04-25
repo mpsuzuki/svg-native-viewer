@@ -151,18 +151,18 @@ inline void CreateSkPaint(const Paint& paint, float opacity, SkPaint& skPaint)
             colors.push_back(SkColorSetARGB(static_cast<uint8_t>(opacity * stopColor[3] * 255), static_cast<uint8_t>(stopColor[0] * 255),
                 static_cast<uint8_t>(stopColor[1] * 255), static_cast<uint8_t>(stopColor[2] * 255)));
         }
-        SkShader::TileMode mode;
+        SkTileMode mode;
         switch (gradient.method)
         {
         case SpreadMethod::kReflect:
-            mode = SkShader::TileMode::kMirror_TileMode;
+            mode = SkTileMode::kMirror;
             break;
         case SpreadMethod::kRepeat:
-            mode = SkShader::TileMode::kRepeat_TileMode;
+            mode = SkTileMode::kRepeat;
             break;
         case SpreadMethod::kPad:
         default:
-            mode = SkShader::TileMode::kClamp_TileMode;
+            mode = SkTileMode::kClamp;
             break;
         }
         SkMatrix* matrix{};
