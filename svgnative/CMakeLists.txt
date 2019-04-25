@@ -156,6 +156,8 @@ if (USE_SKIA)
 file(GLOB skia_port
     ports/skia/SkiaSVGRenderer.h
     ports/skia/SkiaSVGRenderer.cpp
+    ../third_party/cpp-base64/base64.h
+    ../third_party/cpp-base64/base64.cpp
 )
 endif()
 
@@ -209,6 +211,7 @@ target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/include/effects")
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/include/encode")
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/include/gpu")
+target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpp-base64")
 endif()
 if (USE_CAIRO)
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/ports/cairo")
@@ -226,8 +229,10 @@ endif()
 if (USE_SKIA)
 if(MSVC)
 target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/skia.lib")
-else()
+elseif(APPLE)
 target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/osx/libskia.a")
+else()
+target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/out/Shared/libskia.so")
 endif()
 endif()
 if (USE_CAIRO)
