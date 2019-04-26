@@ -299,10 +299,10 @@ inline void createCairoPattern(const Paint& paint, float opacity, cairo_pattern_
         const auto& stopColor = stop.second;
 
         cairo_pattern_add_color_stop_rgba( *pat, stopOffset,
-                                           static_cast<uint8_t>(stopColor[0] * 255),
-                                           static_cast<uint8_t>(stopColor[1] * 255),
-                                           static_cast<uint8_t>(stopColor[2] * 255),
-                                           static_cast<uint8_t>(opacity * stopColor[3] * 255) );
+                                           stopColor[0],
+                                           stopColor[1],
+                                           stopColor[2],
+                                           opacity * stopColor[3] );
     }
 
     // set the mode how to fill the wide area by a small pattern
@@ -346,10 +346,10 @@ void CairoSVGRenderer::DrawPath(
         } else {
             const auto& color = boost::get<Color>(fillStyle.paint);
             cairo_set_source_rgba(mCairo,
-                                  static_cast<uint8_t>(color[0] * 255),
-                                  static_cast<uint8_t>(color[1] * 255),
-                                  static_cast<uint8_t>(color[2] * 255),
-                                  static_cast<uint8_t>(color[3] * 255 * fillStyle.fillOpacity * alpha ));
+                                  color[0],
+                                  color[1],
+                                  color[2],
+                                  color[3] * fillStyle.fillOpacity * alpha );
         }
 
         // Skia backend does not handle fillStyle.Rule yet
@@ -370,10 +370,10 @@ void CairoSVGRenderer::DrawPath(
     {
         const auto& color = boost::get<Color>(strokeStyle.paint);
         cairo_set_source_rgba(mCairo,
-                              static_cast<uint8_t>(color[0] * 255),
-                              static_cast<uint8_t>(color[1] * 255),
-                              static_cast<uint8_t>(color[2] * 255),
-                              static_cast<uint8_t>(color[3] * 255 * strokeStyle.strokeOpacity * alpha ));
+                              color[0],
+                              color[1],
+                              color[2],
+                              color[3] * strokeStyle.strokeOpacity * alpha );
 
         cairo_set_line_width(mCairo, strokeStyle.lineWidth);
         switch (strokeStyle.lineCap) {
