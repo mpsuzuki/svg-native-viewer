@@ -9,6 +9,7 @@ cmake --build build/win64 --config Release
 ]]
 
 cmake_minimum_required(VERSION 3.5.0)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 project(SVGNativeViewer)
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 11)
@@ -47,6 +48,18 @@ CMAKE_DEPENDENT_OPTION(USE_TEXT_EXAMPLE "Text port for testing" TRUE "NOT LIB_ON
 CMAKE_DEPENDENT_OPTION(USE_CG_EXAMPLE "CoreGraphics needs to be enabled and run on macOS/iOS" TRUE "NOT LIB_ONLY;USE_CG" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_SKIA_EXAMPLE "Skia" TRUE "NOT LIB_ONLY;SKIA" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CAIRO_EXAMPLE "Cairo" TRUE "NOT LIB_ONLY;CAIRO" FALSE)
+
+################################
+# setting for Cairo 
+################################
+if(CAIRO)
+    find_package(PkgConfig)
+    include(FindCairo)
+    if(NOT CAIRO_FOUND)
+        set(CAIRO_INCLUDE_DIRS "/usr/include/cairo")     
+        set(CAIRO_LIBRARIES "-lcairo")     
+    endif()
+endif()
 
 ################################
 # Other Attributes
@@ -201,7 +214,7 @@ endif()
 if (USE_CAIRO)
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/ports/cairo")
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpp-base64")
-target_include_directories(SVGNativeViewerLib PUBLIC "/usr/include/cairo/")
+target_include_directories(SVGNativeViewerLib PUBLIC "${CAIRO_INCLUDE_DIRS}")
 endif()
 
 ##############################
@@ -219,7 +232,7 @@ target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_p
 endif()
 endif()
 if (USE_CAIRO)
-target_link_libraries(SVGNativeViewerLib "-lcairo")
+target_link_libraries(SVGNativeViewerLib "${CAIRO_LIBRARIES}")
 endif()
 
 set_target_properties(SVGNativeViewerLib PROPERTIES LINKER_LANGUAGE CXX)
