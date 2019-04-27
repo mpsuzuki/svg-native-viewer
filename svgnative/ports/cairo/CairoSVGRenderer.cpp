@@ -67,6 +67,7 @@ void CairoSVGPath::Ellipse(float cx, float cy, float rx, float ry) {
 
     cairo_translate ((cairo_t*)mPath, cx, cy);
     cairo_scale ((cairo_t*)mPath, rx, ry);
+    cairo_new_sub_path ( mPath );
     cairo_arc ((cairo_t*)mPath, 0, 0, 1, 0, 2 * M_PI);
 
     cairo_set_matrix ((cairo_t*)mPath, &save_matrix); 
