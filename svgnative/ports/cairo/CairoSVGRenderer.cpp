@@ -100,8 +100,20 @@ void CairoSVGPath::CurveToV(float x2, float y2, float x3, float y3)
     mCurrentY = y3;
 }
 
+inline int countPointsFromCairoPath( cairo_path_t* cairoPath )
+{
+    int r = 0;
+    for (int i = 0; i < cairoPath->num_data; i += cairoPath->data[i].header.length )
+        for (int j = 1; j < cairoPath->data[i].header.length; j ++ )
+            r +=1 ;
+    return r;
+}
+
 void CairoSVGPath::ClosePath() {
     cairo_close_path (mPath);
+#if DEBUG
+    int numPoints = countPointsFromCairoPath( cairo_copy_path (mPath) );
+#endif
 }
 
 CairoSVGTransform::CairoSVGTransform(float a, float b, float c, float d, float tx, float ty) {
@@ -195,6 +207,11 @@ inline cairo_path_t* getPathObjFromCairoSvgPath( const Path* path )
 {
     cairo_t* cr = static_cast<const CairoSVGPath*>(path)->mPath;
     return cairo_copy_path( cr );
+}
+
+inline int countPointsFromCairoSvgPath( const Path* path )
+{
+    return countPointsFromCairoPath( getPathObjFromCairoSvgPath( path ) );
 }
 
 inline cairo_path_t* getTransformedClippingPath( const ClippingPath* clippingPath )
@@ -334,6 +351,10 @@ void CairoSVGRenderer::DrawPath(
 {
     SVG_ASSERT(mCairo);
     Save(graphicStyle);
+
+#if DEBUG
+    int numPoints = countPointsFromCairoSvgPath( &path );
+#endif
 
     double alpha = getAlphaProduct( alphas );
 
