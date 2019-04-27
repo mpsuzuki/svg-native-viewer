@@ -227,13 +227,13 @@ inline cairo_path_t* getTransformedClippingPath( const ClippingPath* clippingPat
         for (int i = 0; i < path->num_data; i += path->data[i].header.length )
         {
             pathTransformed->data[i].header = path->data[i].header;
-            for (int j = 0; j < path->data[i].header.length; j ++ )
+            for (int j = 1; j < path->data[i].header.length; j ++ )
             {
-                double x = path->data[i+1+j].point.x;
-                double y = path->data[i+1+j].point.y;
+                double x = path->data[i+j].point.x;
+                double y = path->data[i+j].point.y;
                 cairo_matrix_transform_point( &matrix, &x, &y );
-                pathTransformed->data[i+1+j].point.x = x;
-                pathTransformed->data[i+1+j].point.y = y;
+                pathTransformed->data[i+j].point.x = x;
+                pathTransformed->data[i+j].point.y = y;
             }
         }
         cairo_path_destroy( path );
