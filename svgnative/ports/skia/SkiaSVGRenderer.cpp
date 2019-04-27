@@ -188,6 +188,9 @@ void SkiaSVGRenderer::DrawPath(
 {
     SVG_ASSERT(mCanvas);
     Save(graphicStyle);
+#if DEBUG
+    int numPoints = static_cast<const SkiaSVGPath&>(path).mPath.countPoints();
+#endif
     if (fillStyle.hasFill)
     {
         // FIXME: Handle winding rules.
