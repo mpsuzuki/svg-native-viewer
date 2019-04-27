@@ -61,16 +61,7 @@ int main(int argc, char* const argv[])
     std::string suffix = outPath.substr(outPath.rfind('.') + 1).c_str();
     std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::tolower);
 
-    cairo_surface_t* cairoSurface;
-#if CAIRO_HAS_SVG_SURFACE
-    if (suffix == "svg")
-    {
-        cairoSurface = cairo_svg_surface_create(argv[2], doc->Width(), doc->Height());
-        cairo_svg_surface_set_document_unit(cairoSurface, CAIRO_SVG_UNIT_PX);
-    }
-    else
-#endif
-        cairoSurface = cairo_recording_surface_create( CAIRO_CONTENT_COLOR_ALPHA, &docExtents );
+    cairo_surface_t* cairoSurface = cairo_recording_surface_create( CAIRO_CONTENT_COLOR_ALPHA, &docExtents );
 
     auto cairoContext = cairo_create( cairoSurface );
 
@@ -80,15 +71,13 @@ int main(int argc, char* const argv[])
 #if CAIRO_HAS_SVG_SURFACE
     if (suffix == "svg")
     {
-        cairo_show_page( cairoContext );
-        cairo_destroy( cairoContext );
-        cairo_surface_destroy( cairoSurface );
-        // auto cairo_surface_svg = cairo_svg_surface_create(argv[2], doc->Width(), doc->Height());
-        // auto cairo_svg = cairo_create( cairo_surface_svg );
-        // cairo_set_source_surface( cairo_svg, cairoSurface, 0, 0 );
-        // cairo_paint( cairo_svg );
-        // cairo_destroy( cairo_svg );
-        // cairo_surface_destroy( cairo_svg );
+        auto cairo_surface_svg = cairo_svg_surface_create(argv[2], doc->Width(), doc->Height());
+        auto cairo_svg = cairo_create( cairo_surface_svg );
+        cairo_set_source_surface( cairo_svg, cairoSurface, 0, 0 );
+        cairo_paint( cairo_svg );
+        cairo_show_page( cairo_svg );
+        cairo_destroy( cairo_svg );
+        cairo_surface_destroy( cairo_surface_svg );
     }
     else
 #endif
