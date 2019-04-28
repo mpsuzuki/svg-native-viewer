@@ -409,6 +409,7 @@ void CairoSVGRenderer::DrawPath(
                               color[3] * strokeStyle.strokeOpacity * alpha );
 
         cairo_set_line_width(mCairo, strokeStyle.lineWidth);
+
         switch (strokeStyle.lineCap) {
         case LineCap::kRound:
             cairo_set_line_cap(mCairo, CAIRO_LINE_CAP_ROUND);
@@ -433,9 +434,21 @@ void CairoSVGRenderer::DrawPath(
 	    cairo_set_line_join(mCairo, CAIRO_LINE_JOIN_MITER);
         }
 
+        // dashArray is not supported in Skia yet (2019/04/28)
+        // copied from String backend
+        double *dashes = NULL;
+        if (!strokeStyle.dashArray.empty()) {
+            dashes = (double*)malloc( strokeStyle.dashArray.size() * sizeof(double) );
+            for (size_t i = 0; i < strokeStyle.dashArray.size(); i ++ )
+                dashes[i] = strokeStyle.dashArray[i];
+            cairo_set_dash(mCairo, dashes, strokeStyle.dashArray.size(), strokeStyle.dashOffset );
+        }
+
         cairo_new_path (mCairo);
         appendCairoSvgPath( mCairo, path );
         cairo_stroke (mCairo);
+        if (dashes)
+            free (dashes);
     }
     Restore();
 }
