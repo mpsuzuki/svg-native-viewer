@@ -185,3 +185,23 @@ _cairo_image_info_get_png_info (cairo_image_info_t     *info,
 
     return 0; /* CAIRO_STATUS_SUCCESS */
 }
+
+cairo_status_t
+_png_blob_read_func (void           *closure,
+                     unsigned char  *data,
+                     unsigned int    length)
+{
+    _png_blob_closure_t  *png_blob_closure = (_png_blob_closure_t*)closure;
+    
+    if (png_blob_closure->limit <= png_blob_closure->cur_pos)
+        return CAIRO_STATUS_READ_ERROR;
+
+    if (png_blob_closure->limit <= png_blob_closure->cur_pos + length) {
+        memset(data, 0, length); 
+        length = png_blob_closure->limit - png_blob_closure->cur_pos;
+    }
+
+    memcpy(data, png_blob_closure->blob + png_blob_closure->cur_pos, length); 
+    png_blob_closure->cur_pos += length;
+    return CAIRO_STATUS_SUCCESS;
+}
