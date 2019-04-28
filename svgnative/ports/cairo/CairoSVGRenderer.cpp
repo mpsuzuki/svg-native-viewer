@@ -180,6 +180,9 @@ CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding en
 
     switch (encoding) {
     // cairo has special support for PNG which is unavailable for JPEG
+    case ImageEncoding::kJPEG:
+        mImageData = _cairo_image_surface_create_from_jpeg_stream( blob_data, imageString.size() );
+        break;
     case ImageEncoding::kPNG:
         {
             _png_blob_closure_t png_closure = { blob_data, 0, imageString.size() };
