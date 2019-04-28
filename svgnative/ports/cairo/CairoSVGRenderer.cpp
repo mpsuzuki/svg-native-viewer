@@ -178,7 +178,18 @@ CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding en
     const unsigned char* blob_data = (const unsigned char*)malloc( imageString.size() );
     memcpy((void *)blob_data, imageString.data(), imageString.size());
 
-    mImageData = cairo_image_surface_create (cr_fmt, img_info.width, img_info.height);
+    switch (encoding) {
+    // cairo has special support for PNG which is unavailable for JPEG
+    case ImageEncoding::kPNG:
+        {
+            _png_blob_closure_t png_closure = { blob_data, 0, imageString.size() };
+            mImageData = cairo_image_surface_create_from_png_stream( _png_blob_read_func, &png_closure );
+        }
+        break;
+    default:
+        mImageData = cairo_image_surface_create (cr_fmt, img_info.width, img_info.height);
+    }
+
     cairo_surface_set_mime_data (mImageData, mime_type, blob_data, imageString.size(), free, (void*)blob_data);
 }
 
