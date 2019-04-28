@@ -56,6 +56,10 @@ _cairo_image_info_get_jpeg_info (cairo_image_info_t	*info,
 				 const unsigned char	*data,
 				 long			 length);
 
+cairo_surface_t *
+_cairo_image_surface_create_from_jpeg_stream(const unsigned char* data,
+                                             unsigned int length);
+
 int
 _cairo_image_info_get_png_info (cairo_image_info_t	*info,
 				const unsigned char     *data,
