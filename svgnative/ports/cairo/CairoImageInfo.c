@@ -41,6 +41,10 @@
  *
  * http://www.w3.org/Graphics/JPEG/itu-t81.pdf
  */
+#include <stdio.h>
+#include <stdlib.h>
+#include <setjmp.h>
+#include <jpeglib.h>
 
 /* Markers with no parameters. All other markers are followed by a two
  * byte length of the parameters. */
@@ -146,6 +150,88 @@ _cairo_image_info_get_jpeg_info (cairo_image_info_t	*info,
     return 0; /* CAIRO_STATUS_SUCCESS */
 }
 
+struct _cairo_jpeg_error_mgr
+{
+    struct jpeg_error_mgr pub;
+    jmp_buf setjmp_buffer;
+};
+
+typedef struct _cairo_jpeg_error_mgr * _cairo_jpeg_error_ptr;
+
+METHODDEF(void)
+_cairo_jpeg_error_exit (j_common_ptr cinfo)
+{
+    _cairo_jpeg_error_ptr _cairo_jpeg_err = (_cairo_jpeg_error_ptr) cinfo->err;
+    (*cinfo->err->output_message) (cinfo);
+    longjmp(_cairo_jpeg_err->setjmp_buffer, 1);
+}
+
+cairo_surface_t *
+_cairo_image_surface_create_from_jpeg_stream(const unsigned char* data,
+                                             unsigned int length)
+{
+    cairo_surface_t* _cairo_jpeg_surface = NULL;
+
+    struct jpeg_decompress_struct cinfo;
+    struct _cairo_jpeg_error_mgr jerr;
+    cinfo.err = jpeg_std_error(&jerr.pub);
+    jerr.pub.error_exit = _cairo_jpeg_error_exit;
+
+    unsigned char* outBuff = NULL;
+    if (setjmp(jerr.setjmp_buffer)) {
+        jpeg_destroy_decompress(&cinfo);
+        if (_cairo_jpeg_surface) {
+            cairo_surface_destroy (_cairo_jpeg_surface);
+        };
+        return NULL;
+    };
+
+    jpeg_create_decompress(&cinfo);
+    jpeg_mem_src(&cinfo, data, length);
+    jpeg_read_header(&cinfo, TRUE);
+
+    /* cinfo.image_width, cinfo.image_height, cinfo.num_components are already filled, but
+     * cinfo.output_width, cinfo.output_height, cinfo.output_components are not, because
+     * they are output parameters
+     */
+    jpeg_start_decompress(&cinfo);
+
+    size_t outCur, outLimit;
+    int jpeg_row_stride = cinfo.output_width * cinfo.output_components;
+    int cairo_row_stride = cairo_format_stride_for_width (CAIRO_FORMAT_RGB24, cinfo.output_width);
+
+    outLimit = cairo_row_stride * cinfo.output_height;
+    outBuff = (unsigned char*)malloc(outLimit);
+    bzero(outBuff, outLimit);
+    outCur = 0;
+
+    JSAMPARRAY buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr) &cinfo, JPOOL_IMAGE, jpeg_row_stride, 1);
+
+    while (cinfo.output_scanline < cinfo.output_height) {
+        jpeg_read_scanlines(&cinfo, buffer, 1);
+        int ipxl, iclr;
+        for (ipxl = 0; ipxl < cinfo.output_width; ipxl ++) {
+#if 0
+            for (iclr = 0; iclr < cinfo.output_components; iclr ++) {
+                outBuff[outCur + (ipxl * (cinfo.output_components + 1)) + iclr + 1] = buffer[0][(ipxl * cinfo.output_components) + iclr];
+            }
+#endif
+            /* little endian 32bit case */
+            outBuff[outCur+(ipxl * 4)+0] = buffer[0][(ipxl * 3) + 2]; // blue
+            outBuff[outCur+(ipxl * 4)+1] = buffer[0][(ipxl * 3) + 1]; // green
+            outBuff[outCur+(ipxl * 4)+2] = buffer[0][(ipxl * 3) + 0]; // red
+            outBuff[outCur+(ipxl * 4)+3] = 0;
+        }
+        outCur += cairo_row_stride;
+    };
+    jpeg_finish_decompress(&cinfo);
+    jpeg_destroy_decompress(&cinfo);
+
+    /* XXX: this is only RGB case, for grayscale and other colorspaces... */
+    _cairo_jpeg_surface = cairo_image_surface_create_for_data(outBuff, CAIRO_FORMAT_RGB24, cinfo.output_width, cinfo.output_height, cairo_row_stride);
+
+    return _cairo_jpeg_surface;
+}
 
 /* PNG (image/png)
  *
