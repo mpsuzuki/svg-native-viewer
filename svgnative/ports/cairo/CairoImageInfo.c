@@ -190,6 +190,19 @@ _cairo_image_surface_create_from_jpeg_stream(const unsigned char* data,
     jpeg_mem_src(&cinfo, data, length);
     jpeg_read_header(&cinfo, TRUE);
 
+    cairo_format_t cairo_color_format;
+    switch (cinfo.out_color_space) {
+    case JCS_GRAYSCALE:
+        cairo_color_format = CAIRO_FORMAT_A8;
+        break;
+    case JCS_EXT_ARGB:
+        cairo_color_format = CAIRO_FORMAT_ARGB32;
+        break;
+    case JCS_RGB:
+    default:
+        cairo_color_format = CAIRO_FORMAT_RGB24;
+    };
+
     /* cinfo.image_width, cinfo.image_height, cinfo.num_components are already filled, but
      * cinfo.output_width, cinfo.output_height, cinfo.output_components are not, because
      * they are output parameters
@@ -198,7 +211,7 @@ _cairo_image_surface_create_from_jpeg_stream(const unsigned char* data,
 
     size_t outCur, outLimit;
     int jpeg_row_stride = cinfo.output_width * cinfo.output_components;
-    int cairo_row_stride = cairo_format_stride_for_width (CAIRO_FORMAT_RGB24, cinfo.output_width);
+    int cairo_row_stride = cairo_format_stride_for_width (cairo_color_format, cinfo.output_width);
 
     outLimit = cairo_row_stride * cinfo.output_height;
     outBuff = (unsigned char*)malloc(outLimit);
@@ -211,16 +224,20 @@ _cairo_image_surface_create_from_jpeg_stream(const unsigned char* data,
         jpeg_read_scanlines(&cinfo, buffer, 1);
         int ipxl, iclr;
         for (ipxl = 0; ipxl < cinfo.output_width; ipxl ++) {
-#if 0
-            for (iclr = 0; iclr < cinfo.output_components; iclr ++) {
-                outBuff[outCur + (ipxl * (cinfo.output_components + 1)) + iclr + 1] = buffer[0][(ipxl * cinfo.output_components) + iclr];
+            size_t jpeg_buff_offset = (ipxl * cinfo.output_components); 
+            unsigned long rgb = 0;
+            for (iclr = 0; iclr < cinfo.output_components; iclr ++) { 
+                rgb = (rgb << 8) | buffer[0][jpeg_buff_offset + iclr];
+            };
+            switch (cairo_color_format) {
+            case CAIRO_FORMAT_A8:
+                outBuff[ipxl] = rgb;
+                break;
+            case CAIRO_FORMAT_ARGB32:
+            case CAIRO_FORMAT_RGB24:
+                ((uint32_t*)(outBuff + outCur))[ipxl] = rgb;
+                break;
             }
-#endif
-            /* little endian 32bit case */
-            outBuff[outCur+(ipxl * 4)+0] = buffer[0][(ipxl * 3) + 2]; // blue
-            outBuff[outCur+(ipxl * 4)+1] = buffer[0][(ipxl * 3) + 1]; // green
-            outBuff[outCur+(ipxl * 4)+2] = buffer[0][(ipxl * 3) + 0]; // red
-            outBuff[outCur+(ipxl * 4)+3] = 0;
         }
         outCur += cairo_row_stride;
     };
