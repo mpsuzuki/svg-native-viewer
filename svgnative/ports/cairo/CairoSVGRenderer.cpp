@@ -449,6 +449,7 @@ void CairoSVGRenderer::DrawImage(
     Save(graphicStyle);
     cairo_new_path (mCairo);
     cairo_rectangle (mCairo, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
+    cairo_clip(mCairo);
 
     const CairoSVGImageData cairoSvgImgData = static_cast<const CairoSVGImageData&>(image);
 
