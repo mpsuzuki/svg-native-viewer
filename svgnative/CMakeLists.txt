@@ -232,6 +232,7 @@ endif()
 endif()
 if (USE_CAIRO)
 target_link_libraries(SVGNativeViewerLib "${CAIRO_LIBRARIES}")
+target_link_libraries(SVGNativeViewerLib "-ljpeg")
 endif()
 
 set_target_properties(SVGNativeViewerLib PROPERTIES LINKER_LANGUAGE CXX)
