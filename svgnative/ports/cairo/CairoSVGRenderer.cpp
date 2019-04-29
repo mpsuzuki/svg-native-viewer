@@ -148,40 +148,32 @@ void CairoSVGTransform::Concat(const Transform& other) {
 
 CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding encoding)
 {
-    char mime_type[64]; // XXX: C++ has better technique?
     std::string imageString = base64_decode(base64);
-
-    switch (encoding) {
-    case ImageEncoding::kJPEG:
-        strncpy(mime_type, CAIRO_MIME_TYPE_JPEG, sizeof(mime_type));
-        break;
-    case ImageEncoding::kPNG:
-        strncpy(mime_type, CAIRO_MIME_TYPE_PNG, sizeof(mime_type));
-        break;
-    default:
-        throw ("image should be PNG or JPEG\n");
-    };
-
     const unsigned char* blob_data = (const unsigned char*)malloc( imageString.size() );
+    if (!blob_data)
+        throw ("no memory\n");
     memcpy((void *)blob_data, imageString.data(), imageString.size());
 
     switch (encoding) {
-    // cairo has special support for PNG which is unavailable for JPEG
     case ImageEncoding::kJPEG:
         mImageData = _cairo_image_surface_create_from_jpeg_stream( blob_data, imageString.size() );
-        break;
+        if (!mImageData)
+            break;
+        cairo_surface_set_mime_data (mImageData, "image/jpeg", blob_data, imageString.size(), free, (void*)blob_data);
+        return;
     case ImageEncoding::kPNG:
         {
+            // this closure is used in the construction of the surface, no need to keep.
             _png_blob_closure_t png_closure = { blob_data, 0, imageString.size() };
             mImageData = cairo_image_surface_create_from_png_stream( _png_blob_read_func, &png_closure );
         }
-        break;
-    default:
-        throw ("image should be PNG or JPEG\n");
+        if (!mImageData)
+            break;
+        cairo_surface_set_mime_data (mImageData, "image/png", blob_data, imageString.size(), free, (void*)blob_data);
+        return;
     }
-
-    if (mImageData)
-        cairo_surface_set_mime_data (mImageData, mime_type, blob_data, imageString.size(), free, (void*)blob_data);
+    free((void *)blob_data);
+    throw ("image is broken, or not PNG or JPEG\n");
 }
 
 float CairoSVGImageData::Width() const
