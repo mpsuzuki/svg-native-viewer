@@ -70,16 +70,29 @@ int main(int argc, char* const argv[])
         renderer->SetCairo( cairoContext );
         doc->Render();
 
+        cairo_destroy( cairoContext );
+
 #if CAIRO_HAS_SVG_SURFACE
         if (suffix == "svg")
         {
             auto cairo_surface_svg = cairo_svg_surface_create(outPath.c_str(), doc->Width(), doc->Height());
             auto cairo_svg = cairo_create( cairo_surface_svg );
             cairo_set_source_surface( cairo_svg, cairoSurface, 0, 0 );
+
+            /* XXX: it seems that source surface should be destroyed before SVG painting
+             *       to prevent leaks ???
+             */
+            cairo_surface_flush( cairoSurface );
+            cairo_surface_finish( cairoSurface );
+            cairo_surface_destroy( cairoSurface );
+
             cairo_paint( cairo_svg );
             cairo_show_page( cairo_svg );
             cairo_destroy( cairo_svg );
+            cairo_surface_flush( cairo_surface_svg );
+            cairo_surface_finish( cairo_surface_svg );
             cairo_surface_destroy( cairo_surface_svg );
+            continue;
         }
         else
 #endif
@@ -109,7 +122,7 @@ int main(int argc, char* const argv[])
         }
 #endif
 
-        cairo_destroy( cairoContext );
+        cairo_surface_flush( cairoSurface );
         cairo_surface_finish( cairoSurface );
         cairo_surface_destroy( cairoSurface );
     }
