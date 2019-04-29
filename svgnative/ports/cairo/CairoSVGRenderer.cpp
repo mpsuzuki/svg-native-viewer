@@ -211,7 +211,10 @@ inline cairo_path_t* getPathObjFromCairoSvgPath( const Path* path )
 
 inline int countPointsFromCairoSvgPath( const Path* path )
 {
-    return countPointsFromCairoPath( getPathObjFromCairoSvgPath( path ) );
+    cairo_path_t* cairoPath = getPathObjFromCairoSvgPath( path );
+    int r = countPointsFromCairoPath( cairoPath );
+    cairo_path_destroy( cairoPath );
+    return r;
 }
 
 inline cairo_path_t* getTransformedClippingPath( const ClippingPath* clippingPath )
@@ -255,6 +258,7 @@ void CairoSVGRenderer::Save(const GraphicStyle& graphicStyle)
         cairo_path_t* path = getTransformedClippingPath( graphicStyle.clippingPath.get() );
         cairo_append_path( mCairo, path );
         cairo_clip( mCairo );
+        cairo_path_destroy( path );
         // FIXME: Cairo has no API to control winding/even-odd clipping. See
         // https://lists.cairographics.org/archives/cairo/2009-September/018104.html
     }
@@ -343,7 +347,9 @@ inline void createCairoPattern(const Paint& paint, float opacity, cairo_pattern_
 
 inline void appendCairoSvgPath( cairo_t* mCairo, const Path& path )
 {
-    cairo_append_path (mCairo, getPathObjFromCairoSvgPath(&path) );
+    cairo_path_t* cairoPath = getPathObjFromCairoSvgPath(&path);
+    cairo_append_path (mCairo, cairoPath);
+    cairo_path_destroy( cairoPath );
 }
 
 void CairoSVGRenderer::DrawPath(
