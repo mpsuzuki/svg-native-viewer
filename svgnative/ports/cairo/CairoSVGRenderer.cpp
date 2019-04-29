@@ -148,31 +148,18 @@ void CairoSVGTransform::Concat(const Transform& other) {
 
 CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding encoding)
 {
-    cairo_image_info_t  img_info = {0, 0, 0, 0};
-    cairo_format_t      cr_fmt;
-    char                mime_type[64]; // XXX: C++ has better technique?
+    char mime_type[64]; // XXX: C++ has better technique?
     std::string imageString = base64_decode(base64);
 
     switch (encoding) {
     case ImageEncoding::kJPEG:
-        if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_jpeg_info(&img_info, (unsigned char*)imageString.data(), imageString.size())) {
-            return;
-        };
         strncpy(mime_type, CAIRO_MIME_TYPE_JPEG, sizeof(mime_type));
         break;
     case ImageEncoding::kPNG:
-        if (CAIRO_STATUS_SUCCESS !=_cairo_image_info_get_png_info(&img_info, (unsigned char*)imageString.data(), imageString.size())) {
-            return;
-        };
         strncpy(mime_type, CAIRO_MIME_TYPE_PNG, sizeof(mime_type));
         break;
     default:
-        return;
-    };
-
-    switch (img_info.num_components) {
-    default:
-        cr_fmt = CAIRO_FORMAT_ARGB32;
+        throw ("image should be PNG or JPEG\n");
     };
 
     const unsigned char* blob_data = (const unsigned char*)malloc( imageString.size() );
@@ -190,10 +177,11 @@ CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding en
         }
         break;
     default:
-        mImageData = cairo_image_surface_create (cr_fmt, img_info.width, img_info.height);
+        throw ("image should be PNG or JPEG\n");
     }
 
-    cairo_surface_set_mime_data (mImageData, mime_type, blob_data, imageString.size(), free, (void*)blob_data);
+    if (mImageData)
+        cairo_surface_set_mime_data (mImageData, mime_type, blob_data, imageString.size(), free, (void*)blob_data);
 }
 
 float CairoSVGImageData::Width() const

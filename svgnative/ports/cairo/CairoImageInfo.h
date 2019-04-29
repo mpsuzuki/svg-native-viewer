@@ -44,26 +44,9 @@ extern "C" {
 #include <stdint.h>
 #include "cairo.h"
 
-typedef struct _cairo_image_info {
-    int		 width;
-    int		 height;
-    int		 num_components;
-    int		 bits_per_component;
-} cairo_image_info_t;
-
-int
-_cairo_image_info_get_jpeg_info (cairo_image_info_t	*info,
-				 const unsigned char	*data,
-				 long			 length);
-
 cairo_surface_t *
 _cairo_image_surface_create_from_jpeg_stream(const unsigned char* data,
                                              unsigned int length);
-
-int
-_cairo_image_info_get_png_info (cairo_image_info_t	*info,
-				const unsigned char     *data,
-				unsigned long            length);
 
 typedef struct _png_blob_closure {
     const unsigned char*  blob;
