@@ -100,6 +100,10 @@ int main(int argc, char* const argv[])
         cairo_script_from_recording_surface(cairo_dev, cairoSurface);
     }
 #endif
+
+    cairo_destroy( cairoContext );
+    cairo_surface_finish( cairoSurface );
+    cairo_surface_destroy( cairoSurface );
     
     return 0;
 }
