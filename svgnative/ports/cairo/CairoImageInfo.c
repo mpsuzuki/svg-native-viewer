@@ -142,6 +142,10 @@ _cairo_image_surface_create_from_jpeg_stream(const unsigned char* data,
 
     /* XXX: this is only RGB case, for grayscale and other colorspaces... */
     _cairo_jpeg_surface = cairo_image_surface_create_for_data(outBuff, CAIRO_FORMAT_RGB24, cinfo.output_width, cinfo.output_height, cairo_row_stride);
+
+    /* XXX: transfer ownership of pixmap buffer from this caller to the surface,
+     * and let the surface free it when it is being destroyed.
+     */
     cairo_surface_set_mime_data( _cairo_jpeg_surface, "image/x-pixmap", outBuff, outLimit, free, (void*)outBuff );
 
     return _cairo_jpeg_surface;
