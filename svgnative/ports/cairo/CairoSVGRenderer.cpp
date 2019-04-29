@@ -176,6 +176,11 @@ CairoSVGImageData::CairoSVGImageData(const std::string& base64, ImageEncoding en
     throw ("image is broken, or not PNG or JPEG\n");
 }
 
+CairoSVGImageData::~CairoSVGImageData()
+{
+    cairo_surface_destroy( mImageData );
+}
+
 float CairoSVGImageData::Width() const
 {
     if (!mImageData)
@@ -447,11 +452,13 @@ void CairoSVGRenderer::DrawImage(
     cairo_rectangle (mCairo, clipArea.x, clipArea.y, clipArea.width, clipArea.height);
     cairo_clip(mCairo);
 
-    const CairoSVGImageData cairoSvgImgData = static_cast<const CairoSVGImageData&>(image);
+    float w = image.Width();
+    float h = image.Height();
+    cairo_surface_t *mImageData = (static_cast<const CairoSVGImageData&>(image)).mImageData;
 
     cairo_translate (mCairo, fillArea.x, fillArea.y);
-    cairo_scale (mCairo, fillArea.width / cairoSvgImgData.Width(), fillArea.height / cairoSvgImgData.Height() );
-    cairo_set_source_surface (mCairo, cairoSvgImgData.mImageData, 0, 0);
+    cairo_scale (mCairo, fillArea.width / w, fillArea.height / h );
+    cairo_set_source_surface (mCairo, mImageData, 0, 0);
     cairo_paint_with_alpha (mCairo, alpha);
 
     Restore();

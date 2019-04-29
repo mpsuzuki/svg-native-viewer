@@ -65,12 +65,13 @@ class CairoSVGImageData final : public ImageData
 {
 public:
     CairoSVGImageData(const std::string& base64, ImageEncoding encoding);
+    ~CairoSVGImageData();
 
     float Width() const override;
 
     float Height() const override;
 
-    
+
     cairo_surface_t* mImageData;
 };
 
