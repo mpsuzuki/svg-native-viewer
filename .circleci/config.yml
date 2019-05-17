@@ -22,7 +22,7 @@ jobs:
             apt-get install -y git build-essential libboost-system-dev cmake python2.7
             apt-get install -y curl cpio
             apt-get install -y libcairo2-dev
-            apt-get install -y libjpeg-turbo8-dev libjpeg8-dev
+            apt-get install -y libjpeg-turbo8-dev libjpeg8-dev libwebp-dev
 
       - checkout
       - run:
