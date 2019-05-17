@@ -21,6 +21,7 @@ jobs:
             apt-get update
             apt-get install -y git build-essential libboost-system-dev cmake python2.7
             apt-get install -y curl cpio
+            apt-get install -y libcairo2-dev
 
       - checkout
       - run:
