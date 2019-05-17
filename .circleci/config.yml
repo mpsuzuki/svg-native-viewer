@@ -1,87 +1,49 @@
 version: 2
 
 jobs:
-  build+test:
+  build:
+    branches:
+      only:
+        - cairo-main
     docker:
-      - image: debian:stretch
+      - image: ubuntu:bionic
     steps:
       - run:
           name: Installing sudo
-          command: 'apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*'
+          command: |
+            apt-get update
+            apt-get install -y sudo
+            rm -rf /var/lib/apt/lists/*
+
       - run:
           name: Installing Build System
-          command: 'apt-get update && apt-get install -y git build-essential libboost-system-dev cmake python2.7'
+          command: |
+            apt-get update
+            apt-get install -y git build-essential libboost-system-dev cmake python2.7
+
       - checkout
-      - run: git submodule sync
-      - run: git submodule update --init
+      - run:
+          name: Setup 3rd Party Modules
+          command: |
+            git submodule sync
+            git submodule update --init
+            cd third_party
+            curl https://home.hiroshima-u.ac.jp/mpsuzuki/skia-m70_ubuntu1804_20190517.cpio.xz | xz -cd | cpio -vidum
+
       - run:
           name: Creating Build Files
-          command: 'cd svgnative && cmake -Bbuild/linux -H.'
+          command: |
+            cd svgnative
+            cmake -Bbuild/linux -H. -DSTYLE=ON -DUSE_SKIA -DUSE_CAIRO -DUSE_SKIA_EXAMPLE=ON -DUSE_CAIRO_EXAMPLE=ON
+
       - run:
           name: Creating Binary Files
-          command: 'cd svgnative && cmake --build build/linux'
+          command: |
+            cd svgnative
+            make -C build/linux
+
       - run:
           name: Run tests
-          command: 'cd svgnative && /usr/bin/python2.7 script/runTest.py --test=test'
-  build_with_clang:
-    docker:
-      - image: debian:stretch
-    steps:
-      - run:
-          name: Installing sudo
-          command: 'apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*'
-      - run:
-          name: Installing Build System
-          command: 'apt-get update && apt-get install -y git build-essential libboost-system-dev clang cmake python2.7'
-      - checkout
-      - run: git submodule sync
-      - run: git submodule update --init
-      - run:
-          name: Creating Build Files
-          command: 'cd svgnative && cmake -Bbuild/linux -H. -DCMAKE_CXX_COMPILER=clang -DLIB_ONLY=ON'
-      - run:
-          name: Creating Binary Files
-          command: 'cd svgnative && cmake --build build/linux'
-  build_with_style_support:
-    docker:
-      - image: debian:stretch
-    steps:
-      - run:
-          name: Installing sudo
-          command: 'apt-get update && apt-get install -y sudo && rm -rf /var/lib/apt/lists/*'
-      - run:
-          name: Installing Build System
-          command: 'apt-get update && apt-get install -y git build-essential libboost-system-dev cmake python2.7'
-      - checkout
-      - run: git submodule sync
-      - run: git submodule update --init
-      - run:
-          name: Creating Build Files
-          command: 'cd svgnative && cmake -Bbuild/linux -H. -DSTYLE=ON'
-      - run:
-          name: Creating Binary Files
-          command: 'cd svgnative && cmake --build build/linux'
-  build_with_cocoa:
-    macos:
-      xcode: "9.2.0"
-    steps:
-      - checkout
-      - run: git submodule sync
-      - run: git submodule update --init
-      - run:
-          name: Installing dependencies
-          command: brew install cmake boost
-      - run:
-          name: Creating Build Files
-          command: 'cd svgnative && cmake -Bbuild/mac -H. -DCG=ON'
-      - run:
-          name: Creating Binary Files
-          command: 'cd svgnative && cmake --build build/mac'
-workflows:
-  version: 2
-  build_and_test:
-    jobs:
-      - build+test
-      - build_with_style_support
-      - build_with_clang
-      - build_with_cocoa
+          command: |
+            cd svgnative
+            /usr/bin/python2.7 script/runTest.py --test=test
