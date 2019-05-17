@@ -35,7 +35,7 @@ jobs:
           name: Creating Build Files
           command: |
             cd svgnative
-            cmake -Bbuild/linux -H. -DSTYLE=ON -DUSE_SKIA -DUSE_CAIRO -DUSE_SKIA_EXAMPLE=ON -DUSE_CAIRO_EXAMPLE=ON
+            cmake -Bbuild/linux -H. -DSTYLE=ON -DUSE_SKIA=ON -DUSE_CAIRO=ON -DUSE_SKIA_EXAMPLE=ON -DUSE_CAIRO_EXAMPLE=ON
 
       - run:
           name: Creating Binary Files
