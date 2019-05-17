@@ -110,6 +110,8 @@ brew install boost
 sudo apt-get install build-essential libboost-system-dev
 ```
 
+* [About SKIA, please find non-official document SKIA.md](SKIA.md)
+
 ## Building
 
 ### Create project files
