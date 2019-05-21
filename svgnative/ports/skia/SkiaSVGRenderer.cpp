@@ -207,19 +207,9 @@ void SkiaSVGRenderer::DrawPath(
         stroke.setStrokeWidth(strokeStyle.lineWidth);
         if (!strokeStyle.dashArray.empty())
         {
-            auto dashArray = strokeStyle.dashArray;
-            auto dashOffset = strokeStyle.dashOffset;
-            if (dashArray.size() % 2 == 0)
-                stroke.setPathEffect(SkDashPathEffect::Make((SkScalar*)(dashArray.data()), dashArray.size(),
-                                                            (SkScalar)dashOffset));
-            else
-            {
-                std::vector<SkScalar> evenDashArray( 2 * dashArray.size() );
-                evenDashArray.insert(evenDashArray.begin(), dashArray.begin(), dashArray.end());
-                evenDashArray.insert(evenDashArray.begin() + dashArray.size(), dashArray.begin(), dashArray.end());
-                stroke.setPathEffect(SkDashPathEffect::Make((SkScalar*)(evenDashArray.data()), evenDashArray.size(),
-                                                            (SkScalar)dashOffset));
-            }
+            stroke.setPathEffect(SkDashPathEffect::Make((float*)(strokeStyle.dashArray.data()),
+                                                        strokeStyle.dashArray.size(),
+                                                        (SkScalar)strokeStyle.dashOffset));
         }
         CreateSkPaint(strokeStyle.paint, strokeStyle.strokeOpacity, stroke);
         mCanvas->drawPath(static_cast<const SkiaSVGPath&>(path).mPath, stroke);
