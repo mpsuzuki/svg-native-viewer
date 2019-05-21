@@ -207,7 +207,7 @@ void SkiaSVGRenderer::DrawPath(
         stroke.setStrokeWidth(strokeStyle.lineWidth);
         if (!strokeStyle.dashArray.empty())
         {
-            stroke.setPathEffect(SkDashPathEffect::Make((float*)(strokeStyle.dashArray.data()),
+            stroke.setPathEffect(SkDashPathEffect::Make((SkScalar*)(strokeStyle.dashArray.data()),
                                                         strokeStyle.dashArray.size(),
                                                         (SkScalar)strokeStyle.dashOffset));
         }
