@@ -95,7 +95,7 @@ void QtSVGTransform::Scale(float sx, float sy) {
 }
 
 void QtSVGTransform::Concat(const Transform& other) {
-    mTransform.setMatrix( mTransform * other.mTransform );
+    mTransform *= (static_cast<const QtSVGTransform&>(other)).mTransform;
 }
 
 QtSVGImageData::QtSVGImageData(const std::string& base64, ImageEncoding encoding)
@@ -119,12 +119,12 @@ QtSVGImageData::~QtSVGImageData()
 {
 }
 
-float CairoSVGImageData::Width() const
+float QtSVGImageData::Width() const
 {
     return static_cast<float>( mImageData.width() );
 }
 
-float CairoSVGImageData::Height() const
+float QtSVGImageData::Height() const
 {
     return static_cast<float>( mImageData.height() );
 }
@@ -143,15 +143,15 @@ void QtSVGRenderer::Save(const GraphicStyle& graphicStyle)
     mQPainter->save();
 
     if (graphicStyle.transform)
-        mQPainter->setTransform( &(static_cast<QtSVGTransform*>(graphicStyle.transform.get())->mTransform), true /* combined */);
+        mQPainter->setTransform( (static_cast<QtSVGTransform*>(graphicStyle.transform.get())->mTransform), true /* combined */);
 
     if (graphicStyle.clippingPath && graphicStyle.clippingPath->path)
     {
-        QTransform xformForClippingPath = static_cast<const QtSVGTransform*>(clippingPath->transform.get())->mTransform;
-        QPainterPath clippingPath = = static_cast<QtSVGPath>(graphicStyle.clippingPath.get())->mPath;
+        QTransform xformForClippingPath = static_cast<const QtSVGTransform*>(graphicStyle.clippingPath->transform.get())->mTransform;
+        QPainterPath clippingPath = static_cast<QtSVGPath*>(graphicStyle.clippingPath->path.get())->mPath;
         clippingPath = xformForClippingPath.map(clippingPath);
         
-        mQPainter->setClipPath( &clippingPath, Qt::ReplaceClip );
+        mQPainter->setClipPath( clippingPath, Qt::ReplaceClip );
     }
 
     alphas.push_back( graphicStyle.opacity );
@@ -181,29 +181,28 @@ void QtSVGRenderer::DrawPath(
     Save(graphicStyle);
 
     double alpha = getAlphaProduct( alphas );
-    QPainterPath qPath = static_cast<const QtSVGPath>path.mPath;
+    QPainterPath qPath = (static_cast<const QtSVGPath&>(path)).mPath;
 
     if (fillStyle.hasFill)
     {
         const auto& color = boost::get<Color>(fillStyle.paint);
         QBrush qBrush;
-        qBrush.setColor( QColor( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha );
+        qBrush.setColor( QColor( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha ) );
 
         if (fillStyle.paint.type() == typeid(Gradient)) {
-            const auto& gradient = boost::get<Gradient>(paint);
+            const auto& gradient = boost::get<Gradient>(fillStyle.paint);
 
-            switch (gradient.type) {
-            case GradientType::kLinearGradient:
+            if (gradient.type == GradientType::kLinearGradient)
+            {
                 auto qLinearGradient = QLinearGradient( (qreal)gradient.x1, (qreal)gradient.y1,
                                                         (qreal)gradient.x2, (qreal)gradient.y2 );
                 qBrush = QBrush( qLinearGradient );
-                break;
-            case GradientType::kRadialGradient:
+            }
+            else if (gradient.type == GradientType::kRadialGradient)
+            {
                 auto qRadialGradient = QRadialGradient( (qreal)gradient.fx, (qreal)gradient.fy, (qreal)0,
                                                         (qreal)gradient.cx, (qreal)gradient.cx, (qreal)gradient.r );
                 qBrush = QBrush( qRadialGradient );
-                break;
-            default:
             }
         }
         mQPainter->setBrush(qBrush);
@@ -223,8 +222,8 @@ void QtSVGRenderer::DrawPath(
     {
         const auto& color = boost::get<Color>(strokeStyle.paint);
         QPen qPen;
-        qPen.setColor( QColor( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha );
-        qPen.setWidthF( (qreal)strokeStyle.lineWidth) );
+        qPen.setColor( QColor( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha ) );
+        qPen.setWidthF( (qreal)strokeStyle.lineWidth );
 
         switch (strokeStyle.lineCap) {
         case LineCap::kRound:
@@ -251,14 +250,14 @@ void QtSVGRenderer::DrawPath(
         }
 
         if (!strokeStyle.dashArray.empty()) {
-            QVector qDashes;
+            QVector<qreal> qDashes;
             qDashes.reserve( strokeStyle.dashArray.size() );
             for (size_t i = 0; i < strokeStyle.dashArray.size(); i ++ )
                 qDashes.push_back( (qreal)strokeStyle.dashArray[i] );
             qPen.setDashPattern(qDashes);
         }
 
-        mQPainter->fillPath(qPath, qBrush);
+        mQPainter->strokePath(qPath, qPen);
     }
     Restore();
 }
@@ -272,15 +271,16 @@ void QtSVGRenderer::DrawImage(
     Save(graphicStyle);
     mQPainter->setClipRect((int)clipArea.x, (int)clipArea.y, (int)clipArea.width, (int)clipArea.height, Qt::ReplaceClip);
 
+    mQPainter->setOpacity(alpha);
     mQPainter->drawImage((int)fillArea.x, (int)fillArea.y,
-                         static_cast<const QtSVGImageData&>(image)).mImageData,
+                         (static_cast<const QtSVGImageData&>(image)).mImageData,
                          0, 0, (int)fillArea.width, (int)fillArea.height,
                          Qt::AutoColor);
 
     Restore();
 }
 
-void QtSVGRenderer::setQPainter(QPainter* qPainter)
+void QtSVGRenderer::SetQPainter(QPainter* qPainter)
 {
     SVG_ASSERT(qPainter);
     mQPainter = qPainter;
