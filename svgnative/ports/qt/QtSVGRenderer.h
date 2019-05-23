@@ -16,6 +16,7 @@ governing permissions and limitations under the License.
 #include <list>
 #include "SVGRenderer.h"
 
+#include <QVector>
 #include <QPainterPath>
 #include <QTransform>
 #include <QImage>
@@ -103,7 +104,7 @@ public:
     void DrawPath(const Path& path, const GraphicStyle& graphicStyle, const FillStyle& fillStyle, const StrokeStyle& strokeStyle) override;
     void DrawImage(const ImageData& image, const GraphicStyle& graphicStyle, const Rect& clipArea, const Rect& fillArea) override;
 
-    void SetQPainter(QPainter qpainter);
+    void SetQPainter(QPainter* qpainter);
 
 private:
     std::list<double> alphas;
