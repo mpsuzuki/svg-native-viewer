@@ -147,9 +147,13 @@ void QtSVGRenderer::Save(const GraphicStyle& graphicStyle)
 
     if (graphicStyle.clippingPath && graphicStyle.clippingPath->path)
     {
-        QTransform xformForClippingPath = static_cast<const QtSVGTransform*>(graphicStyle.clippingPath->transform.get())->mTransform;
         QPainterPath clippingPath = static_cast<QtSVGPath*>(graphicStyle.clippingPath->path.get())->mPath;
-        clippingPath = xformForClippingPath.map(clippingPath);
+
+        if (graphicStyle.clippingPath->transform)
+        {
+            QTransform xformForClippingPath = static_cast<const QtSVGTransform*>(graphicStyle.clippingPath->transform.get())->mTransform;
+            clippingPath = xformForClippingPath.map(clippingPath);
+        }
         
         mQPainter->setClipPath( clippingPath, Qt::ReplaceClip );
     }
