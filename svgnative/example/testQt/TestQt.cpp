@@ -55,8 +55,8 @@ int main(int argc, char* const argv[])
         QImage qImage( doc->Width(), doc->Height(), QImage::Format_ARGB32 );
         qPainter.begin( &qImage );
         doc->Render();
-        qPainter.end();
         qImage.save(QString(outPath.c_str()));
+        qPainter.end();
     }
 
     doc.reset();
