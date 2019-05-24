@@ -105,12 +105,12 @@ QtSVGImageData::QtSVGImageData(const std::string& base64, ImageEncoding encoding
     switch (encoding) {
     case ImageEncoding::kJPEG:
         if (mImageData.loadFromData(q_blob, "JPG"))
-            break;
-        return;
+            return;
+        break;
     case ImageEncoding::kPNG:
         if (mImageData.loadFromData(q_blob, "PNG"))
-            break;
-        return;
+            return;
+        break;
     }
     throw ("image is broken, or not PNG or JPEG\n");
 }
@@ -283,8 +283,9 @@ void QtSVGRenderer::DrawImage(
     mQPainter->setClipRect((int)clipArea.x, (int)clipArea.y, (int)clipArea.width, (int)clipArea.height, Qt::ReplaceClip);
 
     mQPainter->setOpacity(alpha);
+    QImage mImageData = (static_cast<const QtSVGImageData&>(image)).mImageData.scaled(fillArea.width, fillArea.height);
     mQPainter->drawImage((int)fillArea.x, (int)fillArea.y,
-                         (static_cast<const QtSVGImageData&>(image)).mImageData,
+                         mImageData,
                          0, 0, (int)fillArea.width, (int)fillArea.height,
                          Qt::AutoColor);
 
