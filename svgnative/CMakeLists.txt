@@ -52,6 +52,7 @@ CMAKE_DEPENDENT_OPTION(USE_CG_EXAMPLE "CoreGraphics needs to be enabled and run 
 CMAKE_DEPENDENT_OPTION(USE_SKIA_EXAMPLE "Skia" TRUE "NOT LIB_ONLY;SKIA" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_GDIPLUS_EXAMPLE "GDI+ example app" TRUE "NOT LIB_ONLY;GDIPLUS" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CAIRO_EXAMPLE "Cairo example" TRUE "NOT LIB_ONLY;CAIRO" FALSE)
+CMAKE_DEPENDENT_OPTION(USE_CAIRO_EXAMPLE "Qt example" TRUE "NOT LIB_ONLY;QT" FALSE)
 
 ################################
 # setting for Cairo 
@@ -121,6 +122,9 @@ add_subdirectory(example/testGDIPlus)
 endif()
 if (USE_CAIRO_EXAMPLE)
 add_subdirectory(example/testCairo)
+endif()
+if (USE_QT_EXAMPLE)
+add_subdirectory(example/testQt)
 endif()
 
 ##############################
