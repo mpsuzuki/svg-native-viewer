@@ -37,7 +37,7 @@ void QtSVGPath::RoundedRect(float x, float y, float width, float height, float c
 }
 
 void QtSVGPath::Ellipse(float cx, float cy, float rx, float ry) {
-    mPath.addEllipse((qreal)cx, (qreal)cy, (qreal)rx, (qreal)ry);
+    mPath.addEllipse((qreal)(cx - rx), (qreal)(cy - ry), (qreal)(rx * 2), (qreal)(ry * 2));
 }
 
 void QtSVGPath::MoveTo(float x, float y)
@@ -189,9 +189,7 @@ void QtSVGRenderer::DrawPath(
 
     if (fillStyle.hasFill)
     {
-        const auto& color = boost::get<Color>(fillStyle.paint);
         QBrush qBrush;
-        qBrush.setColor( QColor( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha ) );
 
         if (fillStyle.paint.type() == typeid(Gradient)) {
             const auto& gradient = boost::get<Gradient>(fillStyle.paint);
@@ -208,7 +206,14 @@ void QtSVGRenderer::DrawPath(
                                                         (qreal)gradient.cx, (qreal)gradient.cx, (qreal)gradient.r );
                 qBrush = QBrush( qRadialGradient );
             }
-        }
+        } else
+            qBrush.setStyle(Qt::SolidPattern);
+  
+        const auto& color = boost::get<Color>(fillStyle.paint);
+        QColor qColor;
+        qColor.setRgbF( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha );
+        qBrush.setColor( qColor );
+
         mQPainter->setBrush(qBrush);
 
         switch (fillStyle.fillRule) {
@@ -226,7 +231,9 @@ void QtSVGRenderer::DrawPath(
     {
         const auto& color = boost::get<Color>(strokeStyle.paint);
         QPen qPen;
-        qPen.setColor( QColor( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha ) );
+        QColor qColor;
+        qColor.setRgbF( color[0], color[1], color[2], color[3] * strokeStyle.strokeOpacity * alpha );
+        qPen.setColor( qColor );
         qPen.setWidthF( (qreal)strokeStyle.lineWidth );
 
         switch (strokeStyle.lineCap) {
