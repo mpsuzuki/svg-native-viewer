@@ -227,7 +227,7 @@ void QtSVGRenderer::DrawPath(
 
         mQPainter->fillPath(qPath, qBrush);
     }
-    if (strokeStyle.hasStroke)
+    if (strokeStyle.hasStroke && strokeStyle.lineWidth > 0)
     {
         const auto& color = boost::get<Color>(strokeStyle.paint);
         QPen qPen;
@@ -264,8 +264,9 @@ void QtSVGRenderer::DrawPath(
             QVector<qreal> qDashes;
             qDashes.reserve( strokeStyle.dashArray.size() );
             for (size_t i = 0; i < strokeStyle.dashArray.size(); i ++ )
-                qDashes.push_back( (qreal)strokeStyle.dashArray[i] );
+                qDashes.push_back( (qreal)strokeStyle.dashArray[i] / (qreal)strokeStyle.lineWidth  );
             qPen.setDashPattern(qDashes);
+            qPen.setDashOffset((qreal)strokeStyle.dashOffset / (qreal)strokeStyle.lineWidth );
         }
 
         mQPainter->strokePath(qPath, qPen);
