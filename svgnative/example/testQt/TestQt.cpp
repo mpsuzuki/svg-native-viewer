@@ -14,6 +14,7 @@ governing permissions and limitations under the License.
 #include <list>
 
 #include "QtSVGRenderer.h"
+#include <QPicture>
 
 #include <fstream>
 #include <iostream>
@@ -52,11 +53,22 @@ int main(int argc, char* const argv[])
         std::string suffix = outPath.substr(outPath.rfind('.') + 1).c_str();
         std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::tolower);
 
-        QImage qImage( doc->Width(), doc->Height(), QImage::Format_ARGB32 );
-        qPainter.begin( &qImage );
-        doc->Render();
-        qImage.save(QString(outPath.c_str()));
-        qPainter.end();
+        if (suffix == "pic")
+        {
+            QPicture qPicture;
+            qPainter.begin( &qPicture );
+            doc->Render();
+            qPainter.end();
+            qPicture.save(QString(outPath.c_str()));
+        }
+        else 
+        {
+            QImage qImage( doc->Width(), doc->Height(), QImage::Format_ARGB32 );
+            qPainter.begin( &qImage );
+            doc->Render();
+            qImage.save(QString(outPath.c_str()));
+            qPainter.end();
+        }
     }
 
     doc.reset();
