@@ -5,6 +5,7 @@ jobs:
     branches:
       only:
         - cairo-main
+        - qt
     docker:
       - image: ubuntu:bionic
     steps:
@@ -23,6 +24,7 @@ jobs:
             apt-get install -y curl cpio
             apt-get install -y libcairo2-dev
             apt-get install -y libjpeg-turbo8-dev libjpeg8-dev libwebp-dev libglvnd-dev
+            apt-get install -y libqt4-dev
 
       - checkout
       - run:
@@ -37,7 +39,7 @@ jobs:
           name: Creating Build Files
           command: |
             cd svgnative
-            cmake -Bbuild/linux -H. -DSTYLE=ON -DSKIA=ON -DCAIRO=ON -DUSE_SKIA_EXAMPLE=ON -DUSE_CAIRO_EXAMPLE=ON
+            cmake -Bbuild/linux -H. -DSTYLE=ON -DSKIA=ON -DCAIRO=ON -DUSE_SKIA_EXAMPLE=ON -DUSE_CAIRO_EXAMPLE=ON -DQT=ON -DUSE_QT_EXAMPLE=ON
 
       - run:
           name: Creating Binary Files
