@@ -20,6 +20,9 @@ jobs:
           command: |
             apt-get update
             apt-get install -y git build-essential libboost-system-dev cmake python2.7
+            apt-get install -y curl cpio
+            apt-get install -y libcairo2-dev
+            apt-get install -y libjpeg-turbo8-dev libjpeg8-dev libwebp-dev libglvnd-dev
 
       - checkout
       - run:
@@ -34,7 +37,7 @@ jobs:
           name: Creating Build Files
           command: |
             cd svgnative
-            cmake -Bbuild/linux -H. -DSTYLE=ON -DUSE_SKIA -DUSE_CAIRO -DUSE_SKIA_EXAMPLE=ON -DUSE_CAIRO_EXAMPLE=ON
+            cmake -Bbuild/linux -H. -DSTYLE=ON -DSKIA=ON -DCAIRO=ON -DUSE_SKIA_EXAMPLE=ON -DUSE_CAIRO_EXAMPLE=ON
 
       - run:
           name: Creating Binary Files
