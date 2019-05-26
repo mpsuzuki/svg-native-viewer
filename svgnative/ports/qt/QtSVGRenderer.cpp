@@ -193,26 +193,38 @@ void QtSVGRenderer::DrawPath(
 
         if (fillStyle.paint.type() == typeid(Gradient)) {
             const auto& gradient = boost::get<Gradient>(fillStyle.paint);
+            QGradient qGradient;
 
             if (gradient.type == GradientType::kLinearGradient)
             {
-                auto qLinearGradient = QLinearGradient( (qreal)gradient.x1, (qreal)gradient.y1,
-                                                        (qreal)gradient.x2, (qreal)gradient.y2 );
-                qBrush = QBrush( qLinearGradient );
+                qGradient = QLinearGradient( (qreal)gradient.x1, (qreal)gradient.y1,
+                                             (qreal)gradient.x2, (qreal)gradient.y2 );
             }
             else if (gradient.type == GradientType::kRadialGradient)
             {
-                auto qRadialGradient = QRadialGradient( (qreal)gradient.fx, (qreal)gradient.fy, (qreal)0,
-                                                        (qreal)gradient.cx, (qreal)gradient.cx, (qreal)gradient.r );
-                qBrush = QBrush( qRadialGradient );
+                qGradient = QRadialGradient( (qreal)gradient.fx, (qreal)gradient.fy, (qreal)0,
+                                             (qreal)gradient.cx, (qreal)gradient.cx, (qreal)gradient.r );
             }
-        } else
+
+            for (const auto& stop : gradient.colorStops)
+            {
+                const auto& stopOffset = stop.first;
+                const auto& stopColor  = stop.second;
+                QColor qColor;
+                qColor.setRgbF( stopColor[0], stopColor[1], stopColor[2], stopColor[3] * fillStyle.fillOpacity * alpha );
+                qGradient.setColorAt((qreal)stopOffset, qColor);
+            }
+            qBrush = QBrush( qGradient );
+
+        } else {
             qBrush.setStyle(Qt::SolidPattern);
+
+            const auto& color = boost::get<Color>(fillStyle.paint);
+            QColor qColor;
+            qColor.setRgbF( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha );
+            qBrush.setColor( qColor );
+        }
   
-        const auto& color = boost::get<Color>(fillStyle.paint);
-        QColor qColor;
-        qColor.setRgbF( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha );
-        qBrush.setColor( qColor );
 
         mQPainter->setBrush(qBrush);
 
