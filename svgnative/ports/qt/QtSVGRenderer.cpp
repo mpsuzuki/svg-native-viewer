@@ -202,8 +202,8 @@ void QtSVGRenderer::DrawPath(
             }
             else if (gradient.type == GradientType::kRadialGradient)
             {
-                qGradient = QRadialGradient( (qreal)gradient.fx, (qreal)gradient.fy, (qreal)0,
-                                             (qreal)gradient.cx, (qreal)gradient.cx, (qreal)gradient.r );
+                qGradient = QRadialGradient( (qreal)gradient.fx, (qreal)gradient.fy, (qreal)gradient.r,
+                                             (qreal)gradient.cx, (qreal)gradient.cx, (qreal)0 );
             }
 
             for (const auto& stop : gradient.colorStops)
