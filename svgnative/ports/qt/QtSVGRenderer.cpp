@@ -206,13 +206,17 @@ void QtSVGRenderer::DrawPath(
                                              (qreal)gradient.fx, (qreal)gradient.fy, (qreal)0 );
             }
 
+            qreal lastStopOffset = -1;
             for (const auto& stop : gradient.colorStops)
             {
-                const auto& stopOffset = stop.first;
+                qreal stopOffset = (qreal)stop.first;
                 const auto& stopColor  = stop.second;
                 QColor qColor;
                 qColor.setRgbF( stopColor[0], stopColor[1], stopColor[2], stopColor[3] * fillStyle.fillOpacity * alpha );
-                qGradient.setColorAt((qreal)stopOffset, qColor);
+                if (stopOffset <= lastStopOffset)
+                    stopOffset = lastStopOffset + 1.E-16; // 1.E-16 is minimum visible delta to be added to the double float in 0..1
+                qGradient.setColorAt(stopOffset, qColor);
+                lastStopOffset = stopOffset;
             }
             qBrush = QBrush( qGradient );
 
