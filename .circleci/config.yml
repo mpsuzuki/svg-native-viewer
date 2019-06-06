@@ -4,7 +4,7 @@ jobs:
   build:
     branches:
       only:
-        - cairo-main
+        - master
     docker:
       - image: ubuntu:bionic
     steps:
