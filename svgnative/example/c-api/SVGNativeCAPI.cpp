@@ -51,7 +51,7 @@ typedef struct RendererHive_
 {
     unsigned long           version;
     std::map<std::string, DataInMap>*  render_options;
-    void*  renderer;
+    std::shared_ptr<void>  renderer;
     SVGNative::SVGDocument  doc;
 } RendererHive;
 
@@ -91,21 +91,21 @@ int createRenderer(render_t render_type)
         return -1;
 
     case RENDER_SKIA:
-        hive->renderer = new SVGNative::SkiaSVGRenderer; 
+        hive->renderer = std::make_shared<SVGNative::SkiaSVGRenderer>();; 
         break;
 #if 0
     case RENDER_COREGRAPHICS:
-        hive->renderer = new SVGNative::CGSVGRenderer; 
+        hive->renderer = std::make_shared<SVGNative::CGSVGRenderer>();; 
         break;
 #endif
     case RENDER_CAIRO:
-        hive->renderer = new SVGNative::CairoSVGRenderer; 
+        hive->renderer = std::make_shared<SVGNative::CairoSVGRenderer>();; 
         break;
     case RENDER_QT:
-        hive->renderer = new SVGNative::QtSVGRenderer; 
+        hive->renderer = std::make_shared<SVGNative::QtSVGRenderer>();; 
         break;
     default:
-        hive->renderer = new SVGNative::StringSVGRenderer;
+        hive->renderer = std::make_shared<SVGNative::StringSVGRenderer>();; 
     };
     return 0;
 }
@@ -137,25 +137,7 @@ int deleteRenderer()
     if ( !hive )
         return -1;
 
-    switch (getRendererType()) {
-    case RENDER_STRING:
-      delete (SVGNative::StringSVGRenderer*)(hive->renderer);
-      break;
-    case RENDER_SKIA:
-      delete (SVGNative::SkiaSVGRenderer*)(hive->renderer);
-      break;
-#if 0
-    case RENDER_COREGRAPHICS:
-      delete (SVGNative::CGSVGRenderer*)(hive->renderer);
-      break;
-#endif
-    case RENDER_CAIRO:
-      delete (SVGNative::CairoSVGRenderer*)(hive->renderer);
-      break;
-    case RENDER_QT:
-      delete (SVGNative::QtSVGRenderer*)(hive->renderer);
-      break;
-    };
+    hive->renderer.reset();
 
     return 0;
 }
