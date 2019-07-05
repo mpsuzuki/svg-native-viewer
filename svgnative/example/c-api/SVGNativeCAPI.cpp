@@ -52,30 +52,32 @@ typedef struct RendererHive_
     unsigned long           version;
     std::map<std::string, DataInMap>*  render_options;
     render_t               renderType;
-    std::unique_ptr<SVGNative::SVGDocument>        doc;
-
-#ifdef SVGViewer_StringSVGRenderer_h
-    std::shared_ptr<SVGNative::StringSVGRenderer>  renderString;
-#endif
-
-#ifdef SVGViewer_SkiaSVGRenderer_h
-    std::shared_ptr<SVGNative::SkiaSVGRenderer>    renderSkia;
-#endif
-
-#ifdef SVGViewer_CGSVGRenderer_h
-    std::shared_ptr<SVGNative::CGSVGRenderer>      renderCoreGraphics;
-#endif
-
-#ifdef SVGViewer_CairoSVGRenderer_h
-    std::shared_ptr<SVGNative::CairoSVGRenderer>   renderCairo;
-#endif
-
-#ifdef SVGViewer_QtSVGRenderer_h
-    std::shared_ptr<SVGNative::QtSVGRenderer>      renderQt;
-#endif
 } RendererHive;
 
 RendererHive*  hive;
+
+std::unique_ptr<SVGNative::SVGDocument>        doc;
+
+#ifdef SVGViewer_StringSVGRenderer_h
+std::shared_ptr<SVGNative::StringSVGRenderer>  renderString;
+#endif
+
+#ifdef SVGViewer_SkiaSVGRenderer_h
+std::shared_ptr<SVGNative::SkiaSVGRenderer>    renderSkia;
+#endif
+
+#ifdef SVGViewer_CGSVGRenderer_h
+std::shared_ptr<SVGNative::CGSVGRenderer>      renderCoreGraphics;
+#endif
+
+#ifdef SVGViewer_CairoSVGRenderer_h
+std::shared_ptr<SVGNative::CairoSVGRenderer>   renderCairo;
+#endif
+
+#ifdef SVGViewer_QtSVGRenderer_h
+std::shared_ptr<SVGNative::QtSVGRenderer>      renderQt;
+#endif
+
 
 /* ------------------------------------------------------- */
 
@@ -112,25 +114,25 @@ int createRenderer(render_t render_type)
         return -1;
 
     case RENDER_SKIA:
-        hive->renderSkia = std::make_shared<SVGNative::SkiaSVGRenderer>();; 
+        renderSkia = std::make_shared<SVGNative::SkiaSVGRenderer>();
         hive->renderType = RENDER_SKIA;
         break;
 #ifdef SVGViewer_CGSVGRenderer_h
     case RENDER_COREGRAPHICS:
-        hive->renderCoreGraphics = std::make_shared<SVGNative::CGSVGRenderer>();; 
+        renderCoreGraphics = std::make_shared<SVGNative::CGSVGRenderer>();
         hive->renderType = RENDER_COREGRAPHICS;
         break;
 #endif
     case RENDER_CAIRO:
-        hive->renderCairo = std::make_shared<SVGNative::CairoSVGRenderer>();; 
+        renderCairo = std::make_shared<SVGNative::CairoSVGRenderer>();
         hive->renderType = RENDER_CAIRO;
         break;
     case RENDER_QT:
-        hive->renderQt = std::make_shared<SVGNative::QtSVGRenderer>();; 
+        renderQt = std::make_shared<SVGNative::QtSVGRenderer>();
         hive->renderType = RENDER_QT;
         break;
     default:
-        hive->renderString = std::make_shared<SVGNative::StringSVGRenderer>();; 
+        renderString = std::make_shared<SVGNative::StringSVGRenderer>();
         hive->renderType = RENDER_STRING;
     };
     return 0;
@@ -152,31 +154,31 @@ int deleteRenderer()
     switch (getRendererType()) {
 #ifdef SVGViewer_StringSVGRenderer_h
     case RENDER_STRING:
-        hive->renderString.reset();
+        renderString.reset();
         break;
 #endif
 
 #ifdef SVGViewer_SkiaSVGRenderer_h
     case RENDER_SKIA:
-        hive->renderSkia.reset();
+        renderSkia.reset();
         break;
 #endif
 
 #ifdef SVGViewer_CGSVGRenderer_h
     case RENDER_COREGRAPHICS:
-        hive->renderCoreGraphics.reset();
+        renderCoreGraphics.reset();
         break;
 #endif
 
 #ifdef SVGViewer_CairoSVGRenderer_h
     case RENDER_CAIRO:
-        hive->renderCairo.reset();
+        renderCairo.reset();
         break;
 #endif
 
 #ifdef SVGViewer_QtSVGRenderer_h
     case RENDER_QT:
-        hive->renderQt.reset();
+        renderQt.reset();
         break;
 #endif
     };
@@ -201,22 +203,22 @@ int setOutputForRenderer(void* output)
     switch( getRendererType() ) {
 #ifdef SVGViewer_SkiaSVGRenderer_h
     case RENDER_SKIA:
-        hive->renderSkia->SetSkCanvas( (SkCanvas*)output ); 
+        renderSkia->SetSkCanvas( (SkCanvas*)output ); 
         break;
 #endif
 #ifdef SVGViewer_CGSVGRenderer_h
     case RENDER_COREGRAPHICS:
-        hive->rendererCoreGraphics->SetGraphicsContext( (CGContextRef)output ); 
+        rendererCoreGraphics->SetGraphicsContext( (CGContextRef)output ); 
         break;
 #endif
 #ifdef SVGViewer_CairoSVGRenderer_h
     case RENDER_CAIRO:
-        hive->renderCairo->SetCairo( (cairo_t*)output ); 
+        renderCairo->SetCairo( (cairo_t*)output ); 
         break;
 #endif
 #ifdef SVGViewer_QtSVGRenderer_h
     case RENDER_QT:
-        hive->renderQt->SetQPainter( (QPainter*)output ); 
+        renderQt->SetQPainter( (QPainter*)output ); 
         break;
     };
 #endif
@@ -228,28 +230,28 @@ int createSvgDocument(char* buff)
     switch (r) {
 #ifdef SVGViewer_StringSVGRenderer_h
     case RENDER_STRING:
-        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderString);
+        doc = SVGNative::SVGDocument::CreateSVGDocument(buff, renderString);
         return 0;
 #endif
 #ifdef SVGViewer_SkiaSVGRenderer_h
     case RENDER_SKIA:
-        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderSkia);
+        doc = SVGNative::SVGDocument::CreateSVGDocument(buff, renderSkia);
         return 0;
 #endif
 #ifdef SVGViewer_CGSVGRenderer_h
     case RENDER_COREGRAPHICS:
-        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderCoreGraphics);
+        doc = SVGNative::SVGDocument::CreateSVGDocument(buff, renderCoreGraphics);
         return 0;
 #endif
 
 #ifdef SVGViewer_CairoSVGRenderer_h
     case RENDER_CAIRO:
-        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderCairo);
+        doc = SVGNative::SVGDocument::CreateSVGDocument(buff, renderCairo);
         return 0;
 #endif
 #ifdef SVGViewer_QtSVGRenderer_h
     case RENDER_QT:
-        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderQt);
+        doc = SVGNative::SVGDocument::CreateSVGDocument(buff, renderQt);
         return 0;
 #endif
     default:
@@ -259,23 +261,23 @@ int createSvgDocument(char* buff)
 
 int deleteSvgDocument()
 {
-    if ( !hive || !hive->doc )
+    if ( !hive || !doc )
         return -1;
 
-    hive->doc.reset();
+    doc.reset();
 }
 
 void renderSvgDocument()
 {
-    hive->doc->Render();
+    doc->Render();
 }
 
 long getWidthFromSvgDocument()
 {
-    return (long)(hive->doc->Width());
+    return (long)(doc->Width());
 }
 
 long getHeightFromSvgDocument()
 {
-    return (long)(hive->doc->Height());
+    return (long)(doc->Height());
 }
