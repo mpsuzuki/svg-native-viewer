@@ -29,6 +29,11 @@ QT_CPPFLAGS = -I/usr/include/qt4 -I/usr/include/qt4/QtGui/ -I/usr/include/qt4 -I
 CXXFLAGS = ${PORTS_CPPFLAGS} ${SKIA_CPPFLAGS} ${CAIRO_CPPFLAGS} ${QT_CPPFLAGS} -I.
 CFLAGS = ${PORTS_CPPFLAGS} -I.
 
+all: SVGNativeCAPI.o testCAPI.o
+
 SVGNativeCAPI.o: SVGNativeCAPI.cpp
 	${CXX} ${CXXFLAGS} \
 		-o $@ -c $<
+
+testCAPI.o: testCAPI.c
+	${CC} ${CAIRO_CPPFLAGS} -I. -o $@ -c $<

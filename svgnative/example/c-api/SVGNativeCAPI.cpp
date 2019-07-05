@@ -269,3 +269,13 @@ void renderSvgDocument()
 {
     hive->doc->Render();
 }
+
+long getWidthFromSvgDocument()
+{
+    return (long)(hive->doc->Width());
+}
+
+long getHeightFromSvgDocument()
+{
+    return (long)(hive->doc->Height());
+}

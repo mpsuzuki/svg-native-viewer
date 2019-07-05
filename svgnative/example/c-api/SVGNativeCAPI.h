@@ -45,6 +45,8 @@ int setOutputForRenderer(void*);
 int createSvgDocument(char*);
 int deleteSvgDocument();
 void renderSvgDocument();
+long getWidthFromSvgDocument();
+long getHeightFromSvgDocument();
 
 #ifdef __cplusplus
 };
