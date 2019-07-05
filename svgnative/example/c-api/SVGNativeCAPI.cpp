@@ -158,18 +158,18 @@ int setOutputForRenderer(void* output)
 {
     switch( getRendererType() ) {
     case RENDER_SKIA:
-        (static_cast<SVGNative::SkiaSVGRenderer*>(hive->renderer))->SetSkCanvas( (SkCanvas*)output ); 
+        (static_pointer_cast<SVGNative::SkiaSVGRenderer>(hive->renderer))->SetSkCanvas( (SkCanvas*)output ); 
         break;
 #if 0
     case RENDER_COREGRAPHICS:
-        (static_cast<SVGNative::CGSVGRenderer*>(hive->renderer))->SetGraphicsContext( (CGContextRef)output ); 
+        (static_pointer_cast<SVGNative::CGSVGRenderer>(hive->renderer))->SetGraphicsContext( (CGContextRef)output ); 
         break;
 #endif
     case RENDER_CAIRO:
-        (static_cast<SVGNative::CairoSVGRenderer*>(hive->renderer))->SetCairo( (cairo_t*)output ); 
+        (static_pointer_cast<SVGNative::CairoSVGRenderer>(hive->renderer))->SetCairo( (cairo_t*)output ); 
         break;
     case RENDER_QT:
-        (static_cast<SVGNative::QtSVGRenderer*>(hive->renderer))->SetQPainter( (QPainter*)output ); 
+        (static_pointer_cast<SVGNative::QtSVGRenderer>(hive->renderer))->SetQPainter( (QPainter*)output ); 
         break;
     };
 }
