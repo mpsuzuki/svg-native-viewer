@@ -24,16 +24,23 @@ SKIA_CPPFLAGS = -I${PROJECT_TOPDIR}/third_party/skia/include/config \
 		-I${PROJECT_TOPDIR}/third_party/skia/include/gpu \
 		-I${PROJECT_TOPDIR}/third_party/cpp-base64
 CAIRO_CPPFLAGS = `pkg-config --cflags cairo`
+CAIRO_LIBS = `pkg-config --libs cairo`
 QT_CPPFLAGS = -I/usr/include/qt4 -I/usr/include/qt4/QtGui/ -I/usr/include/qt4 -I/usr/include/qt4/QtCore/
 
-CXXFLAGS = ${PORTS_CPPFLAGS} ${SKIA_CPPFLAGS} ${CAIRO_CPPFLAGS} ${QT_CPPFLAGS} -I.
-CFLAGS = ${PORTS_CPPFLAGS} -I.
+CXXFLAGS = -ggdb -g3 -O0 ${PORTS_CPPFLAGS} ${SKIA_CPPFLAGS} ${CAIRO_CPPFLAGS} ${QT_CPPFLAGS} -I.
+CFLAGS = -ggdb -g3 -O0 -I.
 
-all: SVGNativeCAPI.o testCAPI.o
+OBJS = SVGNativeCAPI.o testCAPI.o
+
+testCAPI.exe: ${OBJS}
+	${CC} ${CFLAGS} -o $@ ${OBJS} -Wl,-rpath=`pwd` -L. -lSVGNativeViewerLib ${CAIRO_LIBS} -lstdc++
+
+clean:
+	rm -f ${OBJS}
 
 SVGNativeCAPI.o: SVGNativeCAPI.cpp
 	${CXX} ${CXXFLAGS} \
 		-o $@ -c $<
 
 testCAPI.o: testCAPI.c
-	${CC} ${CAIRO_CPPFLAGS} -I. -o $@ -c $<
+	${CC} ${CFLAGS} ${CAIRO_CPPFLAGS} -I. -o $@ -c $<
