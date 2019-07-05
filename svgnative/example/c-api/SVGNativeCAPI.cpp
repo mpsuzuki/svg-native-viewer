@@ -51,8 +51,15 @@ typedef struct RendererHive_
 {
     unsigned long           version;
     std::map<std::string, DataInMap>*  render_options;
-    std::shared_ptr<void>  renderer;
-    SVGNative::SVGDocument  doc;
+    render_t               renderType;
+    std::unique_ptr<SVGNative::SVGDocument>        doc;
+    std::shared_ptr<SVGNative::StringSVGRenderer>  renderString;
+    std::shared_ptr<SVGNative::SkiaSVGRenderer>    renderSkia;
+#if 0
+    std::shared_ptr<SVGNative::CGSVGRenderer>      renderCoreGraphics;
+#endif
+    std::shared_ptr<SVGNative::CairoSVGRenderer>   renderCairo;
+    std::shared_ptr<SVGNative::QtSVGRenderer>      renderQt;
 } RendererHive;
 
 RendererHive*  hive;
@@ -65,6 +72,7 @@ void* createHive()
 
     hive->version = 0x00009000;
     hive->render_options = new std::map<std::string, DataInMap>;
+    hive->renderType = RENDER_NONE;
 
     return (void*)hive;
 }
@@ -74,7 +82,7 @@ void deleteHive()
     if ( !hive )
         return;
 
-    if ( hive->renderer )
+    if ( getRendererType() > 0 )
         deleteRenderer();
 
     delete hive->render_options;
@@ -91,21 +99,26 @@ int createRenderer(render_t render_type)
         return -1;
 
     case RENDER_SKIA:
-        hive->renderer = std::make_shared<SVGNative::SkiaSVGRenderer>();; 
+        hive->renderSkia = std::make_shared<SVGNative::SkiaSVGRenderer>();; 
+        hive->renderType = RENDER_SKIA;
         break;
 #if 0
     case RENDER_COREGRAPHICS:
-        hive->renderer = std::make_shared<SVGNative::CGSVGRenderer>();; 
+        hive->renderCoreGraphics = std::make_shared<SVGNative::CGSVGRenderer>();; 
+        hive->renderType = RENDER_COREGRAPHICS;
         break;
 #endif
     case RENDER_CAIRO:
-        hive->renderer = std::make_shared<SVGNative::CairoSVGRenderer>();; 
+        hive->renderCairo = std::make_shared<SVGNative::CairoSVGRenderer>();; 
+        hive->renderType = RENDER_CAIRO;
         break;
     case RENDER_QT:
-        hive->renderer = std::make_shared<SVGNative::QtSVGRenderer>();; 
+        hive->renderQt = std::make_shared<SVGNative::QtSVGRenderer>();; 
+        hive->renderType = RENDER_QT;
         break;
     default:
-        hive->renderer = std::make_shared<SVGNative::StringSVGRenderer>();; 
+        hive->renderString = std::make_shared<SVGNative::StringSVGRenderer>();; 
+        hive->renderType = RENDER_STRING;
     };
     return 0;
 }
@@ -115,21 +128,7 @@ render_t getRendererType()
     if ( !hive )
         return RENDER_NONE;
 
-    size_t hc = typeid( hive->renderer ).hash_code();
-    if (hc == typeid( SVGNative::StringSVGRenderer ).hash_code())
-        return RENDER_STRING;
-    if (hc == typeid( SVGNative::SkiaSVGRenderer ).hash_code())
-        return RENDER_SKIA;
-#if 0
-    if (hc == typeid( SVGNative::CGSVGRenderer ).hash_code())
-        return RENDER_COREGRAPHICS;
-#endif
-    if (hc == typeid( SVGNative::CairoSVGRenderer ).hash_code())
-        return RENDER_CAIRO;
-    if (hc == typeid( SVGNative::QtSVGRenderer ).hash_code())
-        return RENDER_QT;
-
-    return RENDER_NONE;
+    return hive->renderType;
 }
 
 int deleteRenderer()
@@ -137,7 +136,25 @@ int deleteRenderer()
     if ( !hive )
         return -1;
 
-    hive->renderer.reset();
+    switch (getRendererType()) {
+    case RENDER_STRING:
+        hive->renderString.reset();
+        break;
+    case RENDER_SKIA:
+        hive->renderSkia.reset();
+        break;
+#if 0
+    case RENDER_COREGRAPHICS:
+        hive->renderCoreGraphics.reset();
+        break;
+#endif
+    case RENDER_CAIRO:
+        hive->renderCairo.reset();
+        break;
+    case RENDER_QT:
+        hive->renderQt.reset();
+        break;
+    };
 
     return 0;
 }
@@ -158,28 +175,46 @@ int setOutputForRenderer(void* output)
 {
     switch( getRendererType() ) {
     case RENDER_SKIA:
-        (static_pointer_cast<SVGNative::SkiaSVGRenderer>(hive->renderer))->SetSkCanvas( (SkCanvas*)output ); 
+        hive->renderSkia->SetSkCanvas( (SkCanvas*)output ); 
         break;
 #if 0
     case RENDER_COREGRAPHICS:
-        (static_pointer_cast<SVGNative::CGSVGRenderer>(hive->renderer))->SetGraphicsContext( (CGContextRef)output ); 
+        hive->rendererCoreGraphics->SetGraphicsContext( (CGContextRef)output ); 
         break;
 #endif
     case RENDER_CAIRO:
-        (static_pointer_cast<SVGNative::CairoSVGRenderer>(hive->renderer))->SetCairo( (cairo_t*)output ); 
+        hive->renderCairo->SetCairo( (cairo_t*)output ); 
         break;
     case RENDER_QT:
-        (static_pointer_cast<SVGNative::QtSVGRenderer>(hive->renderer))->SetQPainter( (QPainter*)output ); 
+        hive->renderQt->SetQPainter( (QPainter*)output ); 
         break;
     };
 }
 
-int createSvgDocument(unsigned char* buff)
+int createSvgDocument(char* buff)
 {
-    if ( !hive || !hive->renderer )
+    render_t r = getRendererType();
+    switch (r) {
+    case RENDER_STRING:
+        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderString);
+        break;
+    case RENDER_SKIA:
+        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderSkia);
+        break;
+#if 0
+    case RENDER_COREGRAPHICS:
+        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderCoreGraphics);
+        break;
+#endif
+    case RENDER_CAIRO:
+        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderCairo);
+        break;
+    case RENDER_QT:
+        hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, hive->renderQt);
+        break;
+    default:
         return -1;
-
-    hive->doc = SVGNative::SVGDocument::CreateSVGDocument(buff, static_cast<SVGNative::SVGRenderer*>(hive->renderer));
+    }
 }
 
 int deleteSvgDocument()
