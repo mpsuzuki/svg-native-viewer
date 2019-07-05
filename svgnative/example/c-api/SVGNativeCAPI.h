@@ -42,8 +42,9 @@ render_t getRendererType();
 int deleteRenderer();
 int recreateRenderer();
 int setOutputForRenderer(void*);
-int createSvgDocument(unsigned char*);
+int createSvgDocument(char*);
 int deleteSvgDocument();
+void renderSvgDocument();
 
 #ifdef __cplusplus
 };
