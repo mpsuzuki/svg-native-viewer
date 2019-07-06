@@ -26,5 +26,5 @@ long svgnative_hive_get_width_from_installed_document( SVGNative_Hive );
 long svgnative_hive_get_height_from_installed_document( SVGNative_Hive );
 
 #ifdef __cplusplus
-};
+}
 #endif
