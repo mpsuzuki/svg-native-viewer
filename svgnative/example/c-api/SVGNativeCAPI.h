@@ -34,18 +34,19 @@ typedef enum render_t_ {
 extern "C" {
 #endif
 
-int appendHive();
-int removeHive();
+typedef struct SVGNative_HiveRec_* SVGNative_Hive;
 
-int installRendererToHive(int, render_t);
-render_t getRendererType(int);
-int installOutputToHive(int, void*);
-int installDocumentToHive(int, char*);
-void renderDocumentInHive(int);
-long getWidthFromDocumentInHive(int);
-long getHeightFromDocumentInHive(int);
+SVGNative_Hive svgnative_hive_create();
+void svgnative_hive_destroy( SVGNative_Hive );
+
+int svgnative_hive_install_renderer( SVGNative_Hive, render_t );
+render_t svgnative_hive_get_renderer_type( SVGNative_Hive );
+int svgnative_hive_install_output( SVGNative_Hive, void* );
+int svgnative_hive_install_document_from_buffer( SVGNative_Hive, char*);
+int svgnative_hive_render_installed_document( SVGNative_Hive );
+long svgnative_hive_get_width_from_installed_document( SVGNative_Hive );
+long svgnative_hive_get_height_from_installed_document( SVGNative_Hive );
 
 #ifdef __cplusplus
 };
 #endif
-
