@@ -33,7 +33,7 @@ CFLAGS = -ggdb -g3 -O0 -I.
 OBJS = SVGNativeCAPI.o testCAPI.o
 
 testCAPI.exe: ${OBJS}
-	${CC} ${CFLAGS} -o $@ ${OBJS} -Wl,-rpath=`pwd` -L. -lSVGNativeViewerLib ${CAIRO_LIBS} -lstdc++
+	${CC} ${CFLAGS} -o $@ ${OBJS} ${CAIRO_LIBS} -Wl,-rpath=`pwd` -L. -lSVGNativeViewerLib -lstdc++
 
 clean:
 	rm -f ${OBJS}
