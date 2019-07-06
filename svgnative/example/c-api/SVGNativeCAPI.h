@@ -34,19 +34,16 @@ typedef enum render_t_ {
 extern "C" {
 #endif
 
-void* createHive();
-void deleteHive();
+int appendHive();
+int removeHive();
 
-int createRenderer(render_t);
-render_t getRendererType();
-int deleteRenderer();
-int recreateRenderer();
-int setOutputForRenderer(void*);
-int createSvgDocument(char*);
-int deleteSvgDocument();
-void renderSvgDocument();
-long getWidthFromSvgDocument();
-long getHeightFromSvgDocument();
+int installRendererToHive(int, render_t);
+render_t getRendererType(int);
+int installOutputToHive(int, void*);
+int installDocumentToHive(int, char*);
+void renderDocumentInHive(int);
+long getWidthFromDocumentInHive(int);
+long getHeightFromDocumentInHive(int);
 
 #ifdef __cplusplus
 };

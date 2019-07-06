@@ -38,6 +38,7 @@ char* loadSvgFile(char* svgPath)
 
 int main(int argc, char** argv)
 {
+    int hiveIndex = -1;
     char*  svgBuff;
     cairo_rectangle_t docExtents = { 0, 0, 0, 0 };
     cairo_surface_t* cairoSurface;
@@ -45,26 +46,22 @@ int main(int argc, char** argv)
 
     svgBuff = loadSvgFile(argv[1]);
 
-    createHive();
-    createRenderer( RENDER_CAIRO );
-    createSvgDocument( svgBuff );    
+    hiveIndex = appendHive();
+    installRendererToHive( hiveIndex, RENDER_CAIRO );
+    installDocumentToHive( hiveIndex, svgBuff );    
 
-    docExtents.width = getWidthFromSvgDocument();
-    docExtents.height = getHeightFromSvgDocument();
+    docExtents.width = getWidthFromDocumentInHive( hiveIndex );
+    docExtents.height = getHeightFromDocumentInHive( hiveIndex );
 
     cairoSurface = cairo_recording_surface_create( CAIRO_CONTENT_COLOR_ALPHA, &docExtents );
     cairoContext = cairo_create( cairoSurface );
 
-    setOutputForRenderer( (void*)cairoContext );
+    installOutputToHive(hiveIndex, (void*)cairoContext );
 
-    renderSvgDocument();
+    renderDocumentInHive(hiveIndex);
 
     cairo_destroy( cairoContext );
     cairo_surface_write_to_png( cairoSurface, argv[2] );
-
-    deleteSvgDocument();
-    deleteRenderer();
-    deleteHive();
 
     free(svgBuff);
 }
