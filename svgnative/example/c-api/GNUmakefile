@@ -33,7 +33,7 @@ CFLAGS = -ggdb -g3 -O0 -I.
 OBJS = SVGNativeCAPI.o testCAPI.o
 
 testCAPI.exe: testCAPI.o libsvgnative_wrap.so
-	${CC} ${CFLAGS} -o $@ testCAPI.o ${CAIRO_LIBS} -Wl,-rpath=`pwd` -L. -lsvgnative_wrap ${CAIRO_LIBS}
+	${CC} ${CFLAGS} -o $@ testCAPI.o -Wl,-rpath=`pwd` -L. -lsvgnative_wrap ${CAIRO_LIBS}
 
 clean:
 	rm -f ${OBJS}
