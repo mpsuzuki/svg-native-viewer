@@ -49,6 +49,7 @@ int main(int argc, char** argv)
     hive = svgnative_hive_create();
     svgnative_hive_install_renderer( hive, RENDER_CAIRO );
     svgnative_hive_install_document_from_buffer( hive, svgBuff );    
+    free(svgBuff);
 
     docExtents.width = svgnative_hive_get_width_from_installed_document( hive );
     docExtents.height = svgnative_hive_get_height_from_installed_document( hive ); 
@@ -60,7 +61,10 @@ int main(int argc, char** argv)
     svgnative_hive_render_installed_document( hive );
 
     cairo_destroy( cairoContext );
+    cairo_surface_flush( cairoSurface );
     cairo_surface_write_to_png( cairoSurface, argv[2] );
+    cairo_surface_finish( cairoSurface );
+    cairo_surface_destroy( cairoSurface );
 
-    free(svgBuff);
+    svgnative_hive_destroy( hive );
 }
