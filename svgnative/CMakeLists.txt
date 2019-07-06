@@ -209,9 +209,6 @@ add_library(
     ${cairo_port}
     ${qt_port}
 )
-if (BUILD_SHARED_LIBS)
-set_target_properties(SVGNativeViewerLib PROPERTIES VERSION 99.1.0 SOVERSION 99)
-endif()
 
 ##############################
 # Header search paths
