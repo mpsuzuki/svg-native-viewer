@@ -38,9 +38,9 @@ testCAPI.exe: ${OBJS}
 clean:
 	rm -f ${OBJS}
 
-SVGNativeCAPI.o: SVGNativeCAPI.cpp
+SVGNativeCAPI.o: SVGNativeCAPI.cpp SVGNativeCAPI.h
 	${CXX} ${CXXFLAGS} \
 		-o $@ -c $<
 
-testCAPI.o: testCAPI.c
+testCAPI.o: testCAPI.c SVGNativeCAPI.h
 	${CC} ${CFLAGS} ${CAIRO_CPPFLAGS} -I. -o $@ -c $<
