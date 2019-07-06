@@ -136,21 +136,25 @@ int RenderHive::installOutput(void* output)
          (std::dynamic_pointer_cast<SVGNative::SkiaSVGRenderer>(mRenderer))->SetSkCanvas( (SkCanvas*)output ); 
          return 0;
 #endif
+
 #ifdef SVGViewer_CGSVGRenderer_h
     case RENDER_COREGRAPHICS:
         (std::dynamic_pointer_cast<SVGNative::CGSVGRenderer>(mRenderer))->SetGraphicsContext( (CGContextRef)output ); 
         return 0;
 #endif
+
 #ifdef SVGViewer_CairoSVGRenderer_h
     case RENDER_CAIRO:
         (std::dynamic_pointer_cast<SVGNative::CairoSVGRenderer>(mRenderer))->SetCairo( (cairo_t*)output ); 
         return 0;
 #endif
+
 #ifdef SVGViewer_QtSVGRenderer_h
     case RENDER_QT:
         (std::dynamic_pointer_cast<SVGNative::QtSVGRenderer>(mRenderer))->SetQPainter( (QPainter*)output ); 
         return 0;
 #endif
+
     default:
         return -1;
     }
@@ -193,9 +197,12 @@ int appendHive()
     return hives.size() - 1;
 }
 
-int removeHive()
+int removeHive(int i)
 {
-    RenderHive* aHive = hives.back();
+    if (hives.size() - 1 < i || hives[i])
+        return -1;
+    RenderHive* aHive = hives[i];
+
     hives.pop_back();
     delete aHive;
     return hives.size();
@@ -203,35 +210,49 @@ int removeHive()
 
 int installRendererToHive(int i, render_t r)
 {
+    if (hives.size() - 1 < i || hives[i])
+        return -1;
     return hives[i]->installRenderer(r);
 }
 
 render_t getRendererTypeFromHive(int i)
 {
+    if (hives.size() - 1 < i || hives[i])
+        return RENDER_NONE;
     return hives[i]->getRendererType();
 }
 
 int installOutputToHive(int i, void* o)
 {
+    if (hives.size() - 1 < i || hives[i])
+        return -1;
     return hives[i]->installOutput(o);
 }
 
 int installDocumentToHive(int i, char* buff)
 {
+    if (hives.size() - 1 < i || hives[i])
+        return -1;
     return hives[i]->installDocumentFromBuff(buff);
 }
 
 void renderDocumentInHive(int i)
 {
+    if (hives.size() - 1 < i || hives[i])
+        return;
     hives[i]->renderDocument();
 }
 
 long getWidthFromDocumentInHive(int i)
 {
+    if (hives.size() - 1 < i || hives[i])
+        return -1;
     return hives[i]->getWidthFromDocument();
 }
 
 long getHeightFromDocumentInHive(int i)
 {
+    if (hives.size() - 1 < i || hives[i])
+        return -1;
     return hives[i]->getHeightFromDocument();
 }
