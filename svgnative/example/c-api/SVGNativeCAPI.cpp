@@ -23,33 +23,9 @@
 #include <QPicture>
 #include "QtSVGRenderer.h"
 
-typedef struct DataInMap_
-{
-    data_t  dataType;
-    union {
-        unsigned char*  ustr;
-
-        int32_t   i32;
-        uint32_t  ui32;
-        double    dbl;
-
-        int32_t   s2_i32[2];
-        uint32_t  s2_ui32[2];
-        double    s2_dbl[2];
-
-        int32_t   s4_i32[4];
-        uint32_t  s4_ui32[4];
-        double    s4_dbl[4];
-
-        int32_t   s6_i32[6];
-        uint32_t  s6_ui32[6];
-        double    s6_dbl[6];
-    };
-} DataInMap;
-
 typedef struct SVGNative_HiveRec_ {
     unsigned long  version; 
-    std::map<std::string, DataInMap>  mRenderOptions;
+    std::map<std::string, void*>  mRenderOptions;
     render_t   mRendererType;
     std::shared_ptr<SVGNative::SVGRenderer>  mRenderer;
     std::unique_ptr<SVGNative::SVGDocument>  mDocument;
