@@ -121,6 +121,11 @@ if (USE_QT_EXAMPLE)
 add_subdirectory(example/testQt)
 endif()
 
+####################################
+# Wrapper Library for clients in C
+####################################
+add_subdirectory(example/c-api)
+
 ##############################
 # CPP and Headers for Library
 ##############################
