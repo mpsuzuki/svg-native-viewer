@@ -32,14 +32,17 @@ CFLAGS = -ggdb -g3 -O0 -I.
 
 OBJS = SVGNativeCAPI.o testCAPI.o
 
-testCAPI.exe: ${OBJS}
-	${CC} ${CFLAGS} -o $@ ${OBJS} ${CAIRO_LIBS} -Wl,-rpath=`pwd` -L. -lSVGNativeViewerLib -lstdc++
+testCAPI.exe: testCAPI.o libsvgnative_wrap.so
+	${CC} ${CFLAGS} -o $@ testCAPI.o ${CAIRO_LIBS} -Wl,-rpath=`pwd` -L. -lsvgnative_wrap ${CAIRO_LIBS}
 
 clean:
 	rm -f ${OBJS}
 
+libsvgnative_wrap.so: SVGNativeCAPI.o
+	${CXX} -shared -fPIC -fpic -o $@ $< -Wl,-rpath=`pwd` -L. -lSVGNativeViewerLib -lstdc++
+
 SVGNativeCAPI.o: SVGNativeCAPI.cpp SVGNativeCAPI.h
-	${CXX} ${CXXFLAGS} \
+	${CXX} ${CXXFLAGS} -fPIC -fpic -DPIC \
 		-o $@ -c $<
 
 testCAPI.o: testCAPI.c SVGNativeCAPI.h
