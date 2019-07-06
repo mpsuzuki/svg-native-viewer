@@ -32,6 +32,7 @@ message(STATUS "CMAKE_CXX_COMPILER_VERSION: ${CMAKE_CXX_COMPILER_VERSION}")
 include(CMakeDependentOption)
 
 option(LIB_ONLY "Create a project for library only" OFF)
+option(BUILD_SHARED_LIBS "Build poppler as a shared library" OFF)
 
 option(TEXT "Enable Text port for testing" ON)
 option(CG "Enable CoreGraphics/Quartz2D port")
@@ -198,7 +199,7 @@ endif()
 # Library settings
 ##############################
 add_library(
-    SVGNativeViewerLib STATIC    
+    SVGNativeViewerLib
     ${gl_public}
     ${gl_deprecated_styling}
     ${gl_source}
@@ -267,6 +268,9 @@ endif()
 if (USE_CAIRO)
 target_link_libraries(SVGNativeViewerLib "${CAIRO_LIBRARIES}")
 target_link_libraries(SVGNativeViewerLib "-ljpeg")
+endif()
+if (USE_QT)
+target_link_libraries(SVGNativeViewerLib "${QT_LIBRARIES}")
 endif()
 
 set_target_properties(SVGNativeViewerLib PROPERTIES LINKER_LANGUAGE CXX)
