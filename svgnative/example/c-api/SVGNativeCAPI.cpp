@@ -5,7 +5,6 @@
 #include <iostream>
 #include <string>
 #include <cctype>
-#include <typeinfo> // to use typeid
 
 #include "SVGNativeCAPI.h"
 
