@@ -112,7 +112,7 @@ render_t svgnative_hive_get_renderer_type( SVGNative_Hive hive )
 }
 
 
-int svgnative_hive_install_output( SVGNative_Hive hive,
+int svgnative_hive_import_output( SVGNative_Hive hive,
                                    void* output )
 {
     switch( svgnative_hive_get_renderer_type(hive) ) {
@@ -145,7 +145,7 @@ int svgnative_hive_install_output( SVGNative_Hive hive,
     }
 }
 
-int svgnative_hive_install_document_from_buffer( SVGNative_Hive hive,
+int svgnative_hive_import_document_from_buffer( SVGNative_Hive hive,
                                                  char* buff )
 {
     /* we cannot create SVGDocument without SVGRenderer */
@@ -156,7 +156,7 @@ int svgnative_hive_install_document_from_buffer( SVGNative_Hive hive,
     return 0;
 }
 
-int svgnative_hive_render_installed_document( SVGNative_Hive hive )
+int svgnative_hive_render_current_document( SVGNative_Hive hive )
 {
     if (!hive || !hive->mDocument)
         return -1;
@@ -164,14 +164,14 @@ int svgnative_hive_render_installed_document( SVGNative_Hive hive )
     return 0;
 }
 
-long svgnative_hive_get_width_from_installed_document( SVGNative_Hive hive )
+long svgnative_hive_get_width_from_current_document( SVGNative_Hive hive )
 {
     if (!hive || !hive->mDocument)
         return -1;
     return hive->mDocument->Width();
 }
 
-long svgnative_hive_get_height_from_installed_document( SVGNative_Hive hive )
+long svgnative_hive_get_height_from_current_document( SVGNative_Hive hive )
 {
     if (!hive || !hive->mDocument)
         return -1;
