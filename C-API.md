@@ -9,10 +9,12 @@ a wrapper of libSVGNativeViewerLib for C clients.
 
 # how to build
 
+```
 cd svgnative
 cmake -BBuild/linux-capi -H. -DSKIA=ON -DCAIRO=ON -DQT=ON -DBUILD_SHARED_LIBS=ON
 make -CBuild/linux-capi
 Build/linux-capi/example/c-api/testCAPI test/clipping.svg Build/linux-capi/example/c-api/clipping.png
+```
 
 At present, libsvgnative_wrap does not create the graphic contexts
 by itself, the client should create by themselves. The "testCAPI"
