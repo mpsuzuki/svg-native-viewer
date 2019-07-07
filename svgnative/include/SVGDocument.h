@@ -61,6 +61,18 @@ public:
     std::int32_t Height() const;
 
     /**
+     * Get the horizontal offset of the SVG document in local coordinates.
+     * @return Horizontal offset of the SVG document in local coordinates.
+     */
+    std::int32_t OffsetX() const;
+
+    /**
+     * Get the vertical offset of the SVG document in local coordinates.
+     * @return Vertical offset of the SVG document in local coordinates.
+     */
+    std::int32_t OffsetY() const;
+
+    /**
      * Renderer used to draw SVG content to. This was passed to ParserSVG() first.
      * @return SVGRenderer
      */
