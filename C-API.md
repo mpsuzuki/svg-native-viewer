@@ -12,7 +12,7 @@ a wrapper of libSVGNativeViewerLib for C clients.
 ```
 cd svgnative
 cmake -BBuild/linux-capi -H. -DSKIA=ON -DCAIRO=ON -DQT=ON -DBUILD_SHARED_LIBS=ON
-make -CBuild/linux-capi
+make -C Build/linux-capi
 Build/linux-capi/example/c-api/testCAPI test/clipping.svg Build/linux-capi/example/c-api/clipping.png
 ```
 
