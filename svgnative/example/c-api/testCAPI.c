@@ -40,9 +40,9 @@ int main(int argc, char** argv)
 {
     SVGNative_Hive hive;
     char*  svgBuff;
-    cairo_rectangle_t docExtents = { 0, 0, 0, 0 };
-    cairo_surface_t* cairoSurface;
-    cairo_t* cairoContext;
+    unsigned char* buff;
+    size_t size;
+    FILE* pngFile;
 
     svgBuff = loadSvgFile(argv[1]);
 
@@ -51,20 +51,14 @@ int main(int argc, char** argv)
     svgnative_hive_import_document_from_buffer( hive, svgBuff );    
     free(svgBuff);
 
-    docExtents.width = svgnative_hive_get_width_from_current_document( hive );
-    docExtents.height = svgnative_hive_get_height_from_current_document( hive ); 
-
-    cairoSurface = cairo_recording_surface_create( CAIRO_CONTENT_COLOR_ALPHA, &docExtents );
-    cairoContext = cairo_create( cairoSurface );
-
-    svgnative_hive_import_output( hive, (void*)cairoContext );
+    svgnative_hive_install_output( hive );
     svgnative_hive_render_current_document( hive );
+    svgnative_hive_get_rendered_png( hive, &buff, &size);
 
-    cairo_destroy( cairoContext );
-    cairo_surface_flush( cairoSurface );
-    cairo_surface_write_to_png( cairoSurface, argv[2] );
-    cairo_surface_finish( cairoSurface );
-    cairo_surface_destroy( cairoSurface );
+    pngFile = fopen(argv[2], "wb+");
+    fwrite( buff, 1, size, pngFile );
+    fclose( pngFile );
+    free( buff );
 
     svgnative_hive_destroy( hive );
 }
