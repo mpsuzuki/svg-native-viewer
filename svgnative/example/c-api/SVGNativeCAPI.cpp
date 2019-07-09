@@ -388,8 +388,7 @@ int svgnative_hive_get_rendered_png( SVGNative_Hive  hive,
             *buff = (unsigned char*)malloc( *size );
             memcpy( (void*)*buff, (void*)qByteArray.data(), *size );
             qBuffer.close();
-            qBuffer.~QBuffer(); /* why needed? valgrind finds leaks if we skip this */
-            // qByteArray.~QByteArray();
+            qByteArray.clear();
         }
 #endif
         break;
