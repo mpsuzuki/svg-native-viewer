@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <strings.h>
 
 #include "SVGNativeCAPI.h"
 
@@ -44,10 +45,23 @@ int main(int argc, char** argv)
     size_t size;
     FILE* pngFile;
 
-    svgBuff = loadSvgFile(argv[1]);
-
     hive = svgnative_hive_create();
-    svgnative_hive_install_renderer( hive, RENDER_CAIRO );
+
+    if (!strcasecmp("skia", argv[1]))
+        svgnative_hive_install_renderer( hive, RENDER_SKIA );
+    else
+    if (!strcasecmp("cairo", argv[1]))
+        svgnative_hive_install_renderer( hive, RENDER_CAIRO );
+    else
+    if (!strcasecmp("qt", argv[1]))
+        svgnative_hive_install_renderer( hive, RENDER_QT );
+    else
+    {
+        fprintf(stderr, "%s: invalid backend is specified\n", argv[1]);
+        exit(-1);
+    }
+
+    svgBuff = loadSvgFile(argv[2]);
     svgnative_hive_import_document_from_buffer( hive, svgBuff );    
     free(svgBuff);
 
@@ -55,7 +69,7 @@ int main(int argc, char** argv)
     svgnative_hive_render_current_document( hive );
     svgnative_hive_get_rendered_png( hive, &buff, &size);
 
-    pngFile = fopen(argv[2], "wb+");
+    pngFile = fopen(argv[3], "wb+");
     fwrite( buff, 1, size, pngFile );
     fclose( pngFile );
     free( buff );
