@@ -20,6 +20,7 @@ make -C Build/linux-capi
 Build/linux-capi/example/c-api/testCAPI skia  test/clipping.svg Build/linux-capi/example/c-api/clipping.skia.png
 Build/linux-capi/example/c-api/testCAPI cairo test/clipping.svg Build/linux-capi/example/c-api/clipping.cairo.png
 Build/linux-capi/example/c-api/testCAPI qt    test/clipping.svg Build/linux-capi/example/c-api/clipping.qt.png
+```
 
 At present, libsvgnative_wrap does not create the graphic contexts
 by itself, the client should create by themselves. The "testCAPI"
