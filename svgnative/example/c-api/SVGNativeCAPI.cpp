@@ -28,6 +28,10 @@
 
 #ifdef USE_QT
 #include <QPicture>
+#include <QPainter>
+#include <QImage>
+#include <QByteArray>
+#include <QBuffer>
 #include "QtSVGRenderer.h"
 #endif
 
@@ -70,7 +74,7 @@ typedef struct SVGNative_HiveRec_ {
 
 SVGNative_Hive svgnative_hive_create()
 {
-    SVGNative_Hive hive = new SVGNative_HiveRec;
+    SVGNative_Hive hive = new SVGNative_HiveRec();
     hive->version = 0x00009000;
     hive->mRendererType = RENDER_NONE;
     hive->hasInternalOutput = FALSE;
@@ -83,14 +87,12 @@ void svgnative_hive_destroy( SVGNative_Hive hive )
         return;
     hive->mRenderer.reset();
     hive->mDocument.reset();
-
     switch (svgnative_hive_get_renderer_type( hive )) {
 #ifdef USE_SKIA
     case RENDER_SKIA:
-        /* no destructor for shared pointer, we call reset() */
-        if (hive->mSkiaCanvas)
-            delete (hive->mSkiaCanvas);
-        hive->mSkiaSurface.reset();
+        /* SkCanvas is owned by source surface, it should not be destroyed externally */
+        if (hive->mSkiaSurface)
+            hive->mSkiaSurface.reset();
         break;
 #endif
 
@@ -117,7 +119,7 @@ void svgnative_hive_destroy( SVGNative_Hive hive )
 
 #ifdef USE_QT
     case RENDER_QT:
-        hive->mQPainter->end();
+        delete hive->mQPainter;
         hive->mQImage.~QImage();
         break;
 #endif
@@ -254,6 +256,7 @@ int svgnative_hive_install_output( SVGNative_Hive hive )
 #ifdef USE_QT
     case RENDER_QT:
         hive->mQImage = QImage(w, h, QImage::Format_ARGB32);
+        hive->mQPainter = new QPainter;
         hive->mQPainter->begin( &(hive->mQImage) );
         hive->hasInternalOutput = TRUE;
         return svgnative_hive_import_output(hive, hive->mQPainter);
@@ -351,7 +354,7 @@ int svgnative_hive_get_rendered_png( SVGNative_Hive  hive,
             auto skImage = hive->mSkiaSurface->makeImageSnapshot();
             sk_sp<SkData> pngData(skImage->encodeToData(SkEncodedImageFormat::kPNG, 100));
             *buff = (unsigned char*)malloc( pngData->size() );
-            memcpy( (void*)buff, (void*)pngData->data(), pngData->size() );
+            memcpy( (void*)*buff, (void*)pngData->data(), pngData->size() );
             *size = pngData->size();
         }
 #endif
@@ -376,6 +379,18 @@ int svgnative_hive_get_rendered_png( SVGNative_Hive  hive,
 
     case RENDER_QT:
 #ifdef USE_QT
+        {
+            QByteArray qByteArray;
+            QBuffer qBuffer(&qByteArray);
+            qBuffer.open(QIODevice::WriteOnly);
+            hive->mQImage.save(&qBuffer, "PNG");
+            *size = qByteArray.size();
+            *buff = (unsigned char*)malloc( *size );
+            memcpy( (void*)*buff, (void*)qByteArray.data(), *size );
+            qBuffer.close();
+            qBuffer.~QBuffer(); /* why needed? valgrind finds leaks if we skip this */
+            // qByteArray.~QByteArray();
+        }
 #endif
         break;
 
