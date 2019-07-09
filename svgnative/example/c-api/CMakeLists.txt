@@ -1,3 +1,6 @@
+set(CMAKE_C_FLAGS "-O0 -g3 -ggdb")
+set(CMAKE_CXX_FLAGS "-O0 -g3 -ggdb")
+
 add_library(svgnative_wrap SVGNativeCAPI.cpp)
 file(GLOB SVGNativeCAPI.h)
 target_include_directories(svgnative_wrap PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
