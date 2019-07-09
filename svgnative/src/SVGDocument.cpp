@@ -76,6 +76,10 @@ std::int32_t SVGDocument::Width() const { return static_cast<std::int32_t>(mDocu
 
 std::int32_t SVGDocument::Height() const { return static_cast<std::int32_t>(mDocument->mViewBox[3]); }
 
+std::int32_t SVGDocument::OffsetX() const { return static_cast<std::int32_t>(mDocument->mViewBox[0]); }
+
+std::int32_t SVGDocument::OffsetY() const { return static_cast<std::int32_t>(mDocument->mViewBox[1]); }
+
 SVGRenderer* SVGDocument::Renderer() const { return mDocument->mRenderer.get(); }
 
 #ifdef STYLE_SUPPORT

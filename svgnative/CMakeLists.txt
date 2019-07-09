@@ -50,7 +50,7 @@ CMAKE_DEPENDENT_OPTION(USE_TEXT_EXAMPLE "Text port for testing" TRUE "NOT LIB_ON
 CMAKE_DEPENDENT_OPTION(USE_CG_EXAMPLE "CoreGraphics needs to be enabled and run on macOS/iOS" TRUE "NOT LIB_ONLY;USE_CG" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_SKIA_EXAMPLE "Skia" TRUE "NOT LIB_ONLY;SKIA" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CAIRO_EXAMPLE "Cairo" TRUE "NOT LIB_ONLY;CAIRO" FALSE)
-CMAKE_DEPENDENT_OPTION(USE_CAIRO_EXAMPLE "Qt" TRUE "NOT LIB_ONLY;QT" FALSE)
+CMAKE_DEPENDENT_OPTION(USE_QT_EXAMPLE "Qt" TRUE "NOT LIB_ONLY;QT" FALSE)
 
 ################################
 # setting for Cairo 
@@ -120,6 +120,11 @@ endif()
 if (USE_QT_EXAMPLE)
 add_subdirectory(example/testQt)
 endif()
+
+####################################
+# Wrapper Library for clients in C
+####################################
+add_subdirectory(example/c-api)
 
 ##############################
 # CPP and Headers for Library

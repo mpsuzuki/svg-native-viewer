@@ -48,17 +48,17 @@ int main(int argc, char** argv)
 
     hive = svgnative_hive_create();
     svgnative_hive_install_renderer( hive, RENDER_CAIRO );
-    svgnative_hive_install_document_from_buffer( hive, svgBuff );    
+    svgnative_hive_import_document_from_buffer( hive, svgBuff );    
     free(svgBuff);
 
-    docExtents.width = svgnative_hive_get_width_from_installed_document( hive );
-    docExtents.height = svgnative_hive_get_height_from_installed_document( hive ); 
+    docExtents.width = svgnative_hive_get_width_from_current_document( hive );
+    docExtents.height = svgnative_hive_get_height_from_current_document( hive ); 
 
     cairoSurface = cairo_recording_surface_create( CAIRO_CONTENT_COLOR_ALPHA, &docExtents );
     cairoContext = cairo_create( cairoSurface );
 
-    svgnative_hive_install_output( hive, (void*)cairoContext );
-    svgnative_hive_render_installed_document( hive );
+    svgnative_hive_import_output( hive, (void*)cairoContext );
+    svgnative_hive_render_current_document( hive );
 
     cairo_destroy( cairoContext );
     cairo_surface_flush( cairoSurface );

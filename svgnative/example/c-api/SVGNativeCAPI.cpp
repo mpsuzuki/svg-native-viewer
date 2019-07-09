@@ -8,19 +8,27 @@
 
 #include "SVGNativeCAPI.h"
 
+#ifdef USE_TEXT
 #include "StringSVGRenderer.h"
+#endif
 
+#ifdef USE_SKIA
 #include "SkData.h"
 #include "SkImage.h"
 #include "SkStream.h"
 #include "SkSurface.h"
 #include "SkiaSVGRenderer.h"
+#endif
 
+#ifdef USE_CAIRO
 #include "cairo.h"
 #include "CairoSVGRenderer.h"
+#endif
 
+#ifdef USE_QT
 #include <QPicture>
 #include "QtSVGRenderer.h"
+#endif
 
 typedef struct SVGNative_HiveRec_ {
     unsigned long  version; 
@@ -54,35 +62,35 @@ int svgnative_hive_install_renderer( SVGNative_Hive hive,
         return -1;
 
     switch(rendererType) {
-#ifdef SVGViewer_StringSVGRenderer_h
+#ifdef USE_STRING
     case RENDER_STRING:
         hive->mRenderer = std::make_shared<SVGNative::StringSVGRenderer>();
         hive->mRendererType = RENDER_STRING;
         return 0;
 #endif
 
-#ifdef SVGViewer_SkiaSVGRenderer_h
+#ifdef USE_SKIA
     case RENDER_SKIA:
         hive->mRenderer = std::make_shared<SVGNative::SkiaSVGRenderer>();
         hive->mRendererType = RENDER_SKIA;
         return 0;
 #endif
 
-#ifdef SVGViewer_CGSVGRenderer_h
+#ifdef USE_COREGRAPHICS
     case RENDER_COREGRAPHICS:
         hive->mRenderer = std::make_shared<SVGNative::CGSVGRenderer>();
         hive->mRendererType = RENDER_COREGRAPHICS;
         return 0;
 #endif
 
-#ifdef SVGViewer_CairoSVGRenderer_h
+#ifdef USE_CAIRO
     case RENDER_CAIRO:
         hive->mRenderer = std::make_shared<SVGNative::CairoSVGRenderer>();
         hive->mRendererType = RENDER_CAIRO;
         return 0;
 #endif
 
-#ifdef SVGViewer_QtSVGRenderer_h
+#ifdef USE_QT
     case RENDER_QT:
         hive->mRenderer = std::make_shared<SVGNative::QtSVGRenderer>();
         hive->mRendererType = RENDER_QT;
@@ -104,29 +112,29 @@ render_t svgnative_hive_get_renderer_type( SVGNative_Hive hive )
 }
 
 
-int svgnative_hive_install_output( SVGNative_Hive hive,
+int svgnative_hive_import_output( SVGNative_Hive hive,
                                    void* output )
 {
     switch( svgnative_hive_get_renderer_type(hive) ) {
-#ifdef SVGViewer_SkiaSVGRenderer_h
+#ifdef USE_SKIA
     case RENDER_SKIA:
          (std::dynamic_pointer_cast<SVGNative::SkiaSVGRenderer>(hive->mRenderer))->SetSkCanvas( (SkCanvas*)output ); 
          return 0;
 #endif
 
-#ifdef SVGViewer_CGSVGRenderer_h
+#ifdef USE_COREGRAPHICS
     case RENDER_COREGRAPHICS:
         (std::dynamic_pointer_cast<SVGNative::CGSVGRenderer>(hive->mRenderer))->SetGraphicsContext( (CGContextRef)output ); 
         return 0;
 #endif
 
-#ifdef SVGViewer_CairoSVGRenderer_h
+#ifdef USE_CAIRO
     case RENDER_CAIRO:
         (std::dynamic_pointer_cast<SVGNative::CairoSVGRenderer>(hive->mRenderer))->SetCairo( (cairo_t*)output ); 
         return 0;
 #endif
 
-#ifdef SVGViewer_QtSVGRenderer_h
+#ifdef USE_QT
     case RENDER_QT:
         (std::dynamic_pointer_cast<SVGNative::QtSVGRenderer>(hive->mRenderer))->SetQPainter( (QPainter*)output ); 
         return 0;
@@ -137,7 +145,7 @@ int svgnative_hive_install_output( SVGNative_Hive hive,
     }
 }
 
-int svgnative_hive_install_document_from_buffer( SVGNative_Hive hive,
+int svgnative_hive_import_document_from_buffer( SVGNative_Hive hive,
                                                  char* buff )
 {
     /* we cannot create SVGDocument without SVGRenderer */
@@ -148,7 +156,7 @@ int svgnative_hive_install_document_from_buffer( SVGNative_Hive hive,
     return 0;
 }
 
-int svgnative_hive_render_installed_document( SVGNative_Hive hive )
+int svgnative_hive_render_current_document( SVGNative_Hive hive )
 {
     if (!hive || !hive->mDocument)
         return -1;
@@ -156,14 +164,14 @@ int svgnative_hive_render_installed_document( SVGNative_Hive hive )
     return 0;
 }
 
-long svgnative_hive_get_width_from_installed_document( SVGNative_Hive hive )
+long svgnative_hive_get_width_from_current_document( SVGNative_Hive hive )
 {
     if (!hive || !hive->mDocument)
         return -1;
     return hive->mDocument->Width();
 }
 
-long svgnative_hive_get_height_from_installed_document( SVGNative_Hive hive )
+long svgnative_hive_get_height_from_current_document( SVGNative_Hive hive )
 {
     if (!hive || !hive->mDocument)
         return -1;
