@@ -18,7 +18,7 @@ jobs:
           name: Download prebuild Skia
           command: |
             apt-get install -y curl cpio
-            apt-get install -y libjpeg-turbo8-dev libjpeg8-dev libwebp-dev libglvnd-dev
+            apt-get install -y libjpeg62-turbo-dev libwebp-dev libxcb-glx0-dev
             cd third_party
             curl https://home.hiroshima-u.ac.jp/mpsuzuki/skia-m70_ubuntu1804_20190517.cpio.xz | xz -cd | cpio -vidum
       - run:
