@@ -17,6 +17,7 @@ jobs:
       - run:
           name: Download prebuild Skia
           command: |
+            apt-get install -y curl cpio
             cd third_party
             curl https://home.hiroshima-u.ac.jp/mpsuzuki/skia-m70_ubuntu1804_20190517.cpio.xz | xz -cd | cpio -vidum
       - run:
