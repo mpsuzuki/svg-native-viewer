@@ -77,11 +77,3 @@ jobs:
       - run:
           name: Creating Binary Files
           command: 'cd svgnative && cmake --build build/mac'
-workflows:
-  version: 2
-  build_and_test:
-    jobs:
-      - build+test
-      - build_with_style_support
-      - build_with_clang
-      - build_with_cocoa
