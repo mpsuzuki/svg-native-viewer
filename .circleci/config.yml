@@ -15,8 +15,13 @@ jobs:
       - run: git submodule sync
       - run: git submodule update --init
       - run:
+          name: Download prebuild Skia
+          command: |
+            cd third_party
+            curl https://home.hiroshima-u.ac.jp/mpsuzuki/skia-m70_ubuntu1804_20190517.cpio.xz | xz -cd | cpio -vidum
+      - run:
           name: Creating Build Files
-          command: 'cd svgnative && cmake -Bbuild/linux -H.'
+          command: 'cd svgnative && cmake -Bbuild/linux -H. -DUSE_SKIA -DUSE_SKIA_EXAMPLE=ON'
       - run:
           name: Creating Binary Files
           command: 'cd svgnative && cmake --build build/linux'
