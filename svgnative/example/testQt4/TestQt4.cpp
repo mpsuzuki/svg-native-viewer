@@ -45,7 +45,7 @@ int main(int argc, char* const argv[])
     auto doc = std::unique_ptr<SVGNative::SVGDocument>(SVGNative::SVGDocument::CreateSVGDocument(svgInput.c_str(), renderer));
 
     QPainter qPainter;
-    renderer->SetQPainter( &qPainter );
+    renderer->SetQPainter(&qPainter);
 
     for (int i = 2; i < argc; i++ )
     {
@@ -56,15 +56,15 @@ int main(int argc, char* const argv[])
         if (suffix == "pic")
         {
             QPicture qPicture;
-            qPainter.begin( &qPicture );
+            qPainter.begin(&qPicture);
             doc->Render();
             qPainter.end();
             qPicture.save(QString(outPath.c_str()));
         }
         else 
         {
-            QImage qImage( doc->Width(), doc->Height(), QImage::Format_ARGB32 );
-            qPainter.begin( &qImage );
+            QImage qImage(doc->Width(), doc->Height(), QImage::Format_ARGB32);
+            qPainter.begin(&qImage);
             doc->Render();
             qImage.save(QString(outPath.c_str()));
             qPainter.end();

@@ -36,7 +36,8 @@ void Qt4SVGPath::RoundedRect(float x, float y, float width, float height, float 
                          (qreal)cornerRadius, (qreal)cornerRadius, Qt::AbsoluteSize);
 }
 
-void Qt4SVGPath::Ellipse(float cx, float cy, float rx, float ry) {
+void Qt4SVGPath::Ellipse(float cx, float cy, float rx, float ry)
+{
     mPath.addEllipse((qreal)(cx - rx), (qreal)(cy - ry), (qreal)(rx * 2), (qreal)(ry * 2));
 }
 
@@ -68,33 +69,40 @@ void Qt4SVGPath::CurveToV(float x2, float y2, float x3, float y3)
     mCurrentY = y3;
 }
 
-void Qt4SVGPath::ClosePath() {
+void Qt4SVGPath::ClosePath()
+{
     mPath.closeSubpath();
 }
 
-Qt4SVGTransform::Qt4SVGTransform(float a, float b, float c, float d, float tx, float ty) {
+Qt4SVGTransform::Qt4SVGTransform(float a, float b, float c, float d, float tx, float ty)
+{
     mTransform = QTransform((qreal)a, (qreal)b, (qreal)c, (qreal)d, (qreal)tx, (qreal)ty);
 }
 
-void Qt4SVGTransform::Set(float a, float b, float c, float d, float tx, float ty) {
+void Qt4SVGTransform::Set(float a, float b, float c, float d, float tx, float ty)
+{
     mTransform.setMatrix((qreal)a,  (qreal)b,  0,
                          (qreal)c,  (qreal)d,  0,
                          (qreal)tx, (qreal)ty, 1.0);
 }
 
-void Qt4SVGTransform::Rotate(float degree) {
+void Qt4SVGTransform::Rotate(float degree)
+{
     mTransform.rotate((qreal)degree, Qt::ZAxis);
 }
 
-void Qt4SVGTransform::Translate(float tx, float ty) {
+void Qt4SVGTransform::Translate(float tx, float ty)
+{
     mTransform.translate((qreal)tx, (qreal)ty);
 }
 
-void Qt4SVGTransform::Scale(float sx, float sy) {
+void Qt4SVGTransform::Scale(float sx, float sy)
+{
     mTransform.scale((qreal)sx, (qreal)sy);
 }
 
-void Qt4SVGTransform::Concat(const Transform& other) {
+void Qt4SVGTransform::Concat(const Transform& other)
+{
     mTransform *= (static_cast<const Qt4SVGTransform&>(other)).mTransform;
 }
 
@@ -102,17 +110,17 @@ Qt4SVGImageData::Qt4SVGImageData(const std::string& base64, ImageEncoding encodi
 {
     QByteArray q_blob = QByteArray::fromBase64(base64.c_str());
 
-    switch (encoding) {
-    case ImageEncoding::kJPEG:
+    if (encoding == ImageEncoding::kJPEG)
+    {
         if (mImageData.loadFromData(q_blob, "JPG"))
             return;
-        break;
-    case ImageEncoding::kPNG:
+    }
+    else if (encoding == ImageEncoding::kPNG)
+    {
         if (mImageData.loadFromData(q_blob, "PNG"))
             return;
-        break;
     }
-    throw ("image is broken, or not PNG or JPEG\n");
+    throw("image is broken, or not PNG or JPEG\n");
 }
 
 Qt4SVGImageData::~Qt4SVGImageData()
@@ -121,12 +129,12 @@ Qt4SVGImageData::~Qt4SVGImageData()
 
 float Qt4SVGImageData::Width() const
 {
-    return static_cast<float>( mImageData.width() );
+    return static_cast<float>(mImageData.width());
 }
 
 float Qt4SVGImageData::Height() const
 {
-    return static_cast<float>( mImageData.height() );
+    return static_cast<float>(mImageData.height());
 }
 
 Qt4SVGRenderer::Qt4SVGRenderer()
@@ -139,11 +147,11 @@ Qt4SVGRenderer::~Qt4SVGRenderer()
 
 void Qt4SVGRenderer::Save(const GraphicStyle& graphicStyle)
 {
-    SVG_ASSERT( mQPainter );
+    SVG_ASSERT(mQPainter);
     mQPainter->save();
 
     if (graphicStyle.transform)
-        mQPainter->setTransform( (static_cast<Qt4SVGTransform*>(graphicStyle.transform.get())->mTransform), true /* combined */);
+        mQPainter->setTransform((static_cast<Qt4SVGTransform*>(graphicStyle.transform.get())->mTransform), true /* combined */);
 
     if (graphicStyle.clippingPath && graphicStyle.clippingPath->path)
     {
@@ -155,15 +163,15 @@ void Qt4SVGRenderer::Save(const GraphicStyle& graphicStyle)
             clippingPath = xformForClippingPath.map(clippingPath);
         }
         
-        mQPainter->setClipPath( clippingPath, Qt::ReplaceClip );
+        mQPainter->setClipPath(clippingPath, Qt::ReplaceClip);
     }
 
-    alphas.push_back( graphicStyle.opacity );
+    alphas.push_back(graphicStyle.opacity);
 }
 
 void Qt4SVGRenderer::Restore()
 {
-    SVG_ASSERT( mQPainter );
+    SVG_ASSERT(mQPainter);
     alphas.pop_back();
     mQPainter->restore();
 }
@@ -184,26 +192,27 @@ void Qt4SVGRenderer::DrawPath(
     SVG_ASSERT(mQPainter);
     Save(graphicStyle);
 
-    double alpha = getAlphaProduct( alphas );
+    double alpha = getAlphaProduct(alphas);
     QPainterPath qPath = (static_cast<const Qt4SVGPath&>(path)).mPath;
 
     if (fillStyle.hasFill)
     {
         QBrush qBrush;
 
-        if (fillStyle.paint.type() == typeid(Gradient)) {
+        if (fillStyle.paint.type() == typeid(Gradient))
+        {
             const auto& gradient = boost::get<Gradient>(fillStyle.paint);
             QGradient qGradient;
 
             if (gradient.type == GradientType::kLinearGradient)
             {
-                qGradient = QLinearGradient( (qreal)gradient.x1, (qreal)gradient.y1,
-                                             (qreal)gradient.x2, (qreal)gradient.y2 );
+                qGradient = QLinearGradient((qreal)gradient.x1, (qreal)gradient.y1,
+                                            (qreal)gradient.x2, (qreal)gradient.y2);
             }
             else if (gradient.type == GradientType::kRadialGradient)
             {
-                qGradient = QRadialGradient( (qreal)gradient.cx, (qreal)gradient.cy, (qreal)gradient.r,
-                                             (qreal)gradient.fx, (qreal)gradient.fy, (qreal)0 );
+                qGradient = QRadialGradient((qreal)gradient.cx, (qreal)gradient.cy, (qreal)gradient.r,
+                                            (qreal)gradient.fx, (qreal)gradient.fy, (qreal)0);
             }
 
             qreal lastStopOffset = -1;
@@ -212,27 +221,30 @@ void Qt4SVGRenderer::DrawPath(
                 qreal stopOffset = (qreal)stop.first;
                 const auto& stopColor  = stop.second;
                 QColor qColor;
-                qColor.setRgbF( stopColor[0], stopColor[1], stopColor[2], stopColor[3] * fillStyle.fillOpacity * alpha );
+                qColor.setRgbF(stopColor[0], stopColor[1], stopColor[2], stopColor[3] * fillStyle.fillOpacity * alpha);
                 if (stopOffset <= lastStopOffset)
                     stopOffset = lastStopOffset + 1.E-16; // 1.E-16 is minimum visible delta to be added to the double float in 0..1
                 qGradient.setColorAt(stopOffset, qColor);
                 lastStopOffset = stopOffset;
             }
-            qBrush = QBrush( qGradient );
+            qBrush = QBrush(qGradient);
 
-        } else {
+        }
+        else
+        {
             qBrush.setStyle(Qt::SolidPattern);
 
             const auto& color = boost::get<Color>(fillStyle.paint);
             QColor qColor;
-            qColor.setRgbF( color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha );
-            qBrush.setColor( qColor );
+            qColor.setRgbF(color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha);
+            qBrush.setColor(qColor);
         }
   
 
         mQPainter->setBrush(qBrush);
 
-        switch (fillStyle.fillRule) {
+        switch (fillStyle.fillRule)
+        {
         case WindingRule::kEvenOdd:
             qPath.setFillRule(Qt::OddEvenFill);
             break;
@@ -248,11 +260,12 @@ void Qt4SVGRenderer::DrawPath(
         const auto& color = boost::get<Color>(strokeStyle.paint);
         QPen qPen;
         QColor qColor;
-        qColor.setRgbF( color[0], color[1], color[2], color[3] * strokeStyle.strokeOpacity * alpha );
-        qPen.setColor( qColor );
-        qPen.setWidthF( (qreal)strokeStyle.lineWidth );
+        qColor.setRgbF(color[0], color[1], color[2], color[3] * strokeStyle.strokeOpacity * alpha);
+        qPen.setColor(qColor);
+        qPen.setWidthF((qreal)strokeStyle.lineWidth);
 
-        switch (strokeStyle.lineCap) {
+        switch (strokeStyle.lineCap)
+        {
         case LineCap::kRound:
             qPen.setCapStyle(Qt::RoundCap);
             break;
@@ -264,7 +277,8 @@ void Qt4SVGRenderer::DrawPath(
             qPen.setCapStyle(Qt::FlatCap);
         }
 
-        switch (strokeStyle.lineJoin) {
+        switch (strokeStyle.lineJoin)
+        {
 	case LineJoin::kRound:
             qPen.setJoinStyle(Qt::RoundJoin);
             break;
@@ -276,13 +290,14 @@ void Qt4SVGRenderer::DrawPath(
             qPen.setJoinStyle(Qt::MiterJoin);
         }
 
-        if (!strokeStyle.dashArray.empty()) {
+        if (!strokeStyle.dashArray.empty())
+        {
             QVector<qreal> qDashes;
-            qDashes.reserve( strokeStyle.dashArray.size() );
+            qDashes.reserve(strokeStyle.dashArray.size());
             for (size_t i = 0; i < strokeStyle.dashArray.size(); i ++ )
-                qDashes.push_back( (qreal)strokeStyle.dashArray[i] / (qreal)strokeStyle.lineWidth  );
+                qDashes.push_back((qreal)strokeStyle.dashArray[i] / (qreal)strokeStyle.lineWidth);
             qPen.setDashPattern(qDashes);
-            qPen.setDashOffset((qreal)strokeStyle.dashOffset / (qreal)strokeStyle.lineWidth );
+            qPen.setDashOffset((qreal)strokeStyle.dashOffset / (qreal)strokeStyle.lineWidth);
         }
 
         mQPainter->strokePath(qPath, qPen);
@@ -293,7 +308,7 @@ void Qt4SVGRenderer::DrawPath(
 void Qt4SVGRenderer::DrawImage(
     const ImageData& image, const GraphicStyle& graphicStyle, const Rect& clipArea, const Rect& fillArea)
 {
-    double alpha = getAlphaProduct( alphas );
+    double alpha = getAlphaProduct(alphas);
 
     SVG_ASSERT(mQPainter);
     Save(graphicStyle);
