@@ -61,7 +61,7 @@ int main(int argc, char* const argv[])
             qPainter.end();
             qPicture.save(QString(outPath.c_str()));
         }
-        else 
+        else
         {
             QImage qImage(doc->Width(), doc->Height(), QImage::Format_ARGB32);
             qPainter.begin(&qImage);

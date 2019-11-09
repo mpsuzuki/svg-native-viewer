@@ -162,7 +162,7 @@ void Qt4SVGRenderer::Save(const GraphicStyle& graphicStyle)
             QTransform xformForClippingPath = static_cast<const Qt4SVGTransform*>(graphicStyle.clippingPath->transform.get())->mTransform;
             clippingPath = xformForClippingPath.map(clippingPath);
         }
-        
+
         mQPainter->setClipPath(clippingPath, Qt::ReplaceClip);
     }
 
@@ -239,7 +239,7 @@ void Qt4SVGRenderer::DrawPath(
             qColor.setRgbF(color[0], color[1], color[2], color[3] * fillStyle.fillOpacity * alpha);
             qBrush.setColor(qColor);
         }
-  
+
 
         mQPainter->setBrush(qBrush);
 
