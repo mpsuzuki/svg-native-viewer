@@ -205,6 +205,8 @@ if (USE_QT)
 file(GLOB qt_port
     ports/qt/QtSVGRenderer.h
     ports/qt/QtSVGRenderer.cpp
+    ../third_party/cpp-base64/base64.h
+    ../third_party/cpp-base64/base64.cpp
 )
 endif()
 
@@ -260,6 +262,7 @@ target_include_directories(SVGNativeViewerLib PUBLIC "${CAIRO_INCLUDE_DIRS}")
 endif()
 if (USE_QT)
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/ports/qt")
+target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpp-base64")
 target_include_directories(SVGNativeViewerLib PUBLIC "${QT_INCLUDE_DIRS}")
 target_include_directories(SVGNativeViewerLib PUBLIC "${QT_INCLUDE_DIRS}/Qt")
 target_include_directories(SVGNativeViewerLib PUBLIC "${QT_INCLUDE_DIRS}/QtCore")
