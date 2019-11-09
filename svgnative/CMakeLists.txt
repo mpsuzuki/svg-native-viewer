@@ -45,14 +45,14 @@ CMAKE_DEPENDENT_OPTION(USE_CG "CoreGraphics needs to be enabled and run on macOS
 CMAKE_DEPENDENT_OPTION(USE_SKIA "Skia" TRUE "APPLE;SKIA" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_GDIPLUS "GDI+ port" TRUE "MSVC;GDIPLUS" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CAIRO "Cairo" TRUE "CAIRO" FALSE)
-CMAKE_DEPENDENT_OPTION(USE_QT "Qt" TRUE "QT" FALSE)
+CMAKE_DEPENDENT_OPTION(USE_QT4 "Qt4" TRUE "QT4" FALSE)
 
 CMAKE_DEPENDENT_OPTION(USE_TEXT_EXAMPLE "Text port for testing" TRUE "NOT LIB_ONLY;TEXT" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CG_EXAMPLE "CoreGraphics needs to be enabled and run on macOS/iOS" TRUE "NOT LIB_ONLY;USE_CG" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_SKIA_EXAMPLE "Skia" TRUE "NOT LIB_ONLY;SKIA" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_GDIPLUS_EXAMPLE "GDI+ example app" TRUE "NOT LIB_ONLY;GDIPLUS" FALSE)
 CMAKE_DEPENDENT_OPTION(USE_CAIRO_EXAMPLE "Cairo example" TRUE "NOT LIB_ONLY;CAIRO" FALSE)
-CMAKE_DEPENDENT_OPTION(USE_QT_EXAMPLE "Qt example" TRUE "NOT LIB_ONLY;QT" FALSE)
+CMAKE_DEPENDENT_OPTION(USE_QT4_EXAMPLE "Qt4 example" TRUE "NOT LIB_ONLY;QT4" FALSE)
 
 ################################
 # setting for Cairo 
@@ -67,11 +67,11 @@ if(CAIRO)
 endif()
 
 ################################
-# setting for Qt
+# setting for Qt4
 ################################
-if(QT)
-    set(QT_INCLUDE_DIRS "/usr/include/qt4")
-    set(QT_LIBRARIES "-lQtCore -lQtGui")
+if(QT4)
+    set(QT4_INCLUDE_DIRS "/usr/include/qt4")
+    set(QT4_LIBRARIES "-lQtCore -lQtGui")
 endif()
 
 ################################
@@ -123,8 +123,8 @@ endif()
 if (USE_CAIRO_EXAMPLE)
 add_subdirectory(example/testCairo)
 endif()
-if (USE_QT_EXAMPLE)
-add_subdirectory(example/testQt)
+if (USE_QT4_EXAMPLE)
+add_subdirectory(example/testQt4)
 endif()
 
 ##############################
@@ -201,10 +201,10 @@ file(GLOB cairo_port
 endif()
 
 set(qt_port)
-if (USE_QT)
+if (USE_QT4)
 file(GLOB qt_port
-    ports/qt/QtSVGRenderer.h
-    ports/qt/QtSVGRenderer.cpp
+    ports/qt4/Qt4SVGRenderer.h
+    ports/qt4/Qt4SVGRenderer.cpp
     ../third_party/cpp-base64/base64.h
     ../third_party/cpp-base64/base64.cpp
 )
@@ -260,13 +260,13 @@ target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpp-base64")
 target_include_directories(SVGNativeViewerLib PUBLIC "${CAIRO_INCLUDE_DIRS}")
 endif()
-if (USE_QT)
-target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/ports/qt")
+if (USE_QT4)
+target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/ports/qt4")
 target_include_directories(SVGNativeViewerLib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/cpp-base64")
-target_include_directories(SVGNativeViewerLib PUBLIC "${QT_INCLUDE_DIRS}")
-target_include_directories(SVGNativeViewerLib PUBLIC "${QT_INCLUDE_DIRS}/Qt")
-target_include_directories(SVGNativeViewerLib PUBLIC "${QT_INCLUDE_DIRS}/QtCore")
-target_include_directories(SVGNativeViewerLib PUBLIC "${QT_INCLUDE_DIRS}/QtGui")
+target_include_directories(SVGNativeViewerLib PUBLIC "${QT4_INCLUDE_DIRS}")
+target_include_directories(SVGNativeViewerLib PUBLIC "${QT4_INCLUDE_DIRS}/Qt")
+target_include_directories(SVGNativeViewerLib PUBLIC "${QT4_INCLUDE_DIRS}/QtCore")
+target_include_directories(SVGNativeViewerLib PUBLIC "${QT4_INCLUDE_DIRS}/QtGui")
 endif()
 
 ##############################
