@@ -279,14 +279,14 @@ void Qt4SVGRenderer::DrawPath(
 
         switch (strokeStyle.lineJoin)
         {
-	case LineJoin::kRound:
+        case LineJoin::kRound:
             qPen.setJoinStyle(Qt::RoundJoin);
             break;
-	case LineJoin::kBevel:
+        case LineJoin::kBevel:
             qPen.setJoinStyle(Qt::BevelJoin);
             break;
-	case LineJoin::kMiter:
-	default:
+        case LineJoin::kMiter:
+        default:
             qPen.setJoinStyle(Qt::MiterJoin);
         }
 
