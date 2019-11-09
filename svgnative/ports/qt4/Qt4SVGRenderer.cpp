@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Adobe. All rights reserved.
+Copyright 2019 suzuki toshiya <mpsuzuki@hiroshima-u.ac.jp>. All rights reserved.
 This file is licensed to you under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License. You may obtain a copy
 of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -10,95 +10,95 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-#include "QtSVGRenderer.h"
+#include "Qt4SVGRenderer.h"
 #include "base64.h"
 #include "Config.h"
 #include <math.h>
 
 namespace SVGNative
 {
-QtSVGPath::QtSVGPath()
+Qt4SVGPath::Qt4SVGPath()
 {
 }
 
-QtSVGPath::~QtSVGPath()
+Qt4SVGPath::~Qt4SVGPath()
 {
 }
 
-void QtSVGPath::Rect(float x, float y, float width, float height)
+void Qt4SVGPath::Rect(float x, float y, float width, float height)
 {
     mPath.addRect((qreal)x, (qreal)y, (qreal)width, (qreal)height);
 }
 
-void QtSVGPath::RoundedRect(float x, float y, float width, float height, float cornerRadius)
+void Qt4SVGPath::RoundedRect(float x, float y, float width, float height, float cornerRadius)
 {
     mPath.addRoundedRect((qreal)x, (qreal)y, (qreal)width, (qreal)height,
                          (qreal)cornerRadius, (qreal)cornerRadius, Qt::AbsoluteSize);
 }
 
-void QtSVGPath::Ellipse(float cx, float cy, float rx, float ry) {
+void Qt4SVGPath::Ellipse(float cx, float cy, float rx, float ry) {
     mPath.addEllipse((qreal)(cx - rx), (qreal)(cy - ry), (qreal)(rx * 2), (qreal)(ry * 2));
 }
 
-void QtSVGPath::MoveTo(float x, float y)
+void Qt4SVGPath::MoveTo(float x, float y)
 {
     mPath.moveTo((qreal)x, (qreal)y);
     mCurrentX = x;
     mCurrentY = y;
 }
 
-void QtSVGPath::LineTo(float x, float y)
+void Qt4SVGPath::LineTo(float x, float y)
 {
     mPath.lineTo((qreal)x, (qreal)y);
     mCurrentX = x;
     mCurrentY = y;
 }
 
-void QtSVGPath::CurveTo(float x1, float y1, float x2, float y2, float x3, float y3)
+void Qt4SVGPath::CurveTo(float x1, float y1, float x2, float y2, float x3, float y3)
 {
     mPath.cubicTo((qreal)x1, (qreal)y1, (qreal)x2, (qreal)y2, (qreal)x3, (qreal)y3);
     mCurrentX = x3;
     mCurrentY = y3;
 }
 
-void QtSVGPath::CurveToV(float x2, float y2, float x3, float y3)
+void Qt4SVGPath::CurveToV(float x2, float y2, float x3, float y3)
 {
     mPath.cubicTo((qreal)mCurrentX, (qreal)mCurrentY, (qreal)x2, (qreal)y2, (qreal)x3, (qreal)y3);
     mCurrentX = x3;
     mCurrentY = y3;
 }
 
-void QtSVGPath::ClosePath() {
+void Qt4SVGPath::ClosePath() {
     mPath.closeSubpath();
 }
 
-QtSVGTransform::QtSVGTransform(float a, float b, float c, float d, float tx, float ty) {
+Qt4SVGTransform::Qt4SVGTransform(float a, float b, float c, float d, float tx, float ty) {
     mTransform = QTransform((qreal)a, (qreal)b, (qreal)c, (qreal)d, (qreal)tx, (qreal)ty);
 }
 
-void QtSVGTransform::Set(float a, float b, float c, float d, float tx, float ty) {
+void Qt4SVGTransform::Set(float a, float b, float c, float d, float tx, float ty) {
     mTransform.setMatrix((qreal)a,  (qreal)b,  0,
                          (qreal)c,  (qreal)d,  0,
                          (qreal)tx, (qreal)ty, 1.0);
 }
 
-void QtSVGTransform::Rotate(float degree) {
+void Qt4SVGTransform::Rotate(float degree) {
     mTransform.rotate((qreal)degree, Qt::ZAxis);
 }
 
-void QtSVGTransform::Translate(float tx, float ty) {
+void Qt4SVGTransform::Translate(float tx, float ty) {
     mTransform.translate((qreal)tx, (qreal)ty);
 }
 
-void QtSVGTransform::Scale(float sx, float sy) {
+void Qt4SVGTransform::Scale(float sx, float sy) {
     mTransform.scale((qreal)sx, (qreal)sy);
 }
 
-void QtSVGTransform::Concat(const Transform& other) {
-    mTransform *= (static_cast<const QtSVGTransform&>(other)).mTransform;
+void Qt4SVGTransform::Concat(const Transform& other) {
+    mTransform *= (static_cast<const Qt4SVGTransform&>(other)).mTransform;
 }
 
-QtSVGImageData::QtSVGImageData(const std::string& base64, ImageEncoding encoding)
+Qt4SVGImageData::Qt4SVGImageData(const std::string& base64, ImageEncoding encoding)
 {
     QByteArray q_blob = QByteArray::fromBase64(base64.c_str());
 
@@ -115,43 +115,43 @@ QtSVGImageData::QtSVGImageData(const std::string& base64, ImageEncoding encoding
     throw ("image is broken, or not PNG or JPEG\n");
 }
 
-QtSVGImageData::~QtSVGImageData()
+Qt4SVGImageData::~Qt4SVGImageData()
 {
 }
 
-float QtSVGImageData::Width() const
+float Qt4SVGImageData::Width() const
 {
     return static_cast<float>( mImageData.width() );
 }
 
-float QtSVGImageData::Height() const
+float Qt4SVGImageData::Height() const
 {
     return static_cast<float>( mImageData.height() );
 }
 
-QtSVGRenderer::QtSVGRenderer()
+Qt4SVGRenderer::Qt4SVGRenderer()
 {
 }
 
-QtSVGRenderer::~QtSVGRenderer()
+Qt4SVGRenderer::~Qt4SVGRenderer()
 {
 }
 
-void QtSVGRenderer::Save(const GraphicStyle& graphicStyle)
+void Qt4SVGRenderer::Save(const GraphicStyle& graphicStyle)
 {
     SVG_ASSERT( mQPainter );
     mQPainter->save();
 
     if (graphicStyle.transform)
-        mQPainter->setTransform( (static_cast<QtSVGTransform*>(graphicStyle.transform.get())->mTransform), true /* combined */);
+        mQPainter->setTransform( (static_cast<Qt4SVGTransform*>(graphicStyle.transform.get())->mTransform), true /* combined */);
 
     if (graphicStyle.clippingPath && graphicStyle.clippingPath->path)
     {
-        QPainterPath clippingPath = static_cast<QtSVGPath*>(graphicStyle.clippingPath->path.get())->mPath;
+        QPainterPath clippingPath = static_cast<Qt4SVGPath*>(graphicStyle.clippingPath->path.get())->mPath;
 
         if (graphicStyle.clippingPath->transform)
         {
-            QTransform xformForClippingPath = static_cast<const QtSVGTransform*>(graphicStyle.clippingPath->transform.get())->mTransform;
+            QTransform xformForClippingPath = static_cast<const Qt4SVGTransform*>(graphicStyle.clippingPath->transform.get())->mTransform;
             clippingPath = xformForClippingPath.map(clippingPath);
         }
         
@@ -161,7 +161,7 @@ void QtSVGRenderer::Save(const GraphicStyle& graphicStyle)
     alphas.push_back( graphicStyle.opacity );
 }
 
-void QtSVGRenderer::Restore()
+void Qt4SVGRenderer::Restore()
 {
     SVG_ASSERT( mQPainter );
     alphas.pop_back();
@@ -178,14 +178,14 @@ inline double getAlphaProduct(std::list<double> alphas)
     return prod;
 }
 
-void QtSVGRenderer::DrawPath(
+void Qt4SVGRenderer::DrawPath(
     const Path& path, const GraphicStyle& graphicStyle, const FillStyle& fillStyle, const StrokeStyle& strokeStyle)
 {
     SVG_ASSERT(mQPainter);
     Save(graphicStyle);
 
     double alpha = getAlphaProduct( alphas );
-    QPainterPath qPath = (static_cast<const QtSVGPath&>(path)).mPath;
+    QPainterPath qPath = (static_cast<const Qt4SVGPath&>(path)).mPath;
 
     if (fillStyle.hasFill)
     {
@@ -290,7 +290,7 @@ void QtSVGRenderer::DrawPath(
     Restore();
 }
 
-void QtSVGRenderer::DrawImage(
+void Qt4SVGRenderer::DrawImage(
     const ImageData& image, const GraphicStyle& graphicStyle, const Rect& clipArea, const Rect& fillArea)
 {
     double alpha = getAlphaProduct( alphas );
@@ -300,7 +300,7 @@ void QtSVGRenderer::DrawImage(
     mQPainter->setClipRect((int)clipArea.x, (int)clipArea.y, (int)clipArea.width, (int)clipArea.height, Qt::ReplaceClip);
 
     mQPainter->setOpacity(alpha);
-    QImage mImageData = (static_cast<const QtSVGImageData&>(image)).mImageData.scaled(fillArea.width, fillArea.height);
+    QImage mImageData = (static_cast<const Qt4SVGImageData&>(image)).mImageData.scaled(fillArea.width, fillArea.height);
     mQPainter->drawImage((int)fillArea.x, (int)fillArea.y,
                          mImageData,
                          0, 0, (int)fillArea.width, (int)fillArea.height,
@@ -309,7 +309,7 @@ void QtSVGRenderer::DrawImage(
     Restore();
 }
 
-void QtSVGRenderer::SetQPainter(QPainter* qPainter)
+void Qt4SVGRenderer::SetQPainter(QPainter* qPainter)
 {
     SVG_ASSERT(qPainter);
     mQPainter = qPainter;
