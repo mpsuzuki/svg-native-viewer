@@ -157,15 +157,18 @@ file(GLOB gl_deprecated_styling
 )
 endif()
 
-##############################
-# Rendering ports
-##############################
+#####################################################
+# Rendering ports, and collect gl_headers to install
+#####################################################
+file(GLOB gl_headers ${PROJECT_SOURCE_DIR}/include/*.h)
+
 set(text_port)
 if(USE_TEXT)
 file(GLOB text_port
     ports/string/StringSVGRenderer.h
     ports/string/StringSVGRenderer.cpp
 )
+set(gl_headers ${gl_headers} ${PROJECT_SOURCE_DIR}/ports/string/StringSVGRenderer.h)
 endif()
 
 set(cg_port)
@@ -176,6 +179,7 @@ file(GLOB cg_port
     ../third_party/cpp-base64/base64.h
     ../third_party/cpp-base64/base64.cpp
 )
+set(gl_headers ${gl_headers} ${PROJECT_SOURCE_DIR}/ports/cg/CGSVGRenderer.h)
 endif()
 
 set(skia_port)
@@ -184,6 +188,7 @@ file(GLOB skia_port
     ports/skia/SkiaSVGRenderer.h
     ports/skia/SkiaSVGRenderer.cpp
 )
+set(gl_headers ${gl_headers} ${PROJECT_SOURCE_DIR}/ports/skia/SkiaSVGRenderer.h)
 if (NOT MSVC)
     set_source_files_properties(ports/skia/SkiaSVGRenderer.cpp PROPERTIES COMPILE_FLAGS -Wno-pedantic)
 endif()
@@ -197,6 +202,7 @@ file(GLOB gdiplus_port
     ../third_party/cpp-base64/base64.h
     ../third_party/cpp-base64/base64.cpp
 )
+set(gl_headers ${gl_headers} ${PROJECT_SOURCE_DIR}/ports/gdiplus/GDIPlusSVGRenderer.h)
 endif()
 set(cairo_port)
 if (USE_CAIRO)
@@ -208,6 +214,7 @@ file(GLOB cairo_port
     ../third_party/cpp-base64/base64.h
     ../third_party/cpp-base64/base64.cpp
 )
+set(gl_headers ${gl_headers} ${PROJECT_SOURCE_DIR}/ports/cairo/CairoSVGRenderer.h)
 endif()
 
 ##############################
@@ -268,20 +275,35 @@ endif()
 ##############################
 # Library search paths
 ##############################
+set(PRIVATE_LIBS)
 
 if(USE_CG)
-target_link_libraries(SVGNativeViewerLib "-framework CoreGraphics")
+    target_link_libraries(SVGNativeViewerLib "-framework CoreGraphics")
+    set(PRIVATE_LIBS "${PRIVATE_LIBS} -framework CoreGraphics")
 endif()
+
 if (USE_SKIA)
-if(MSVC)
-target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/skia.lib")
-else()
-target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/osx/libskia.a")
+    if(MSVC)
+        target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/skia.lib")
+        set(PRIVATE_LIBS "${PRIVATE_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/ -lskia")
+    else()
+        target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/osx/libskia.a")
+        # XXX: how to list the libraries which libskia.a depends?
+        set(PRIVATE_LIBS "${PRIVATE_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/osx/ -lskia")
+    endif()
 endif()
-endif()
+
 if (USE_CAIRO)
-target_link_libraries(SVGNativeViewerLib "${CAIRO_LIBRARIES}")
-target_link_libraries(SVGNativeViewerLib "-ljpeg")
+    target_link_libraries(SVGNativeViewerLib "${CAIRO_LIBRARIES}")
+    target_link_libraries(SVGNativeViewerLib "-ljpeg")
+    # XXX: CAIRO_STATIC_LIBRARIES is always empty, why?
+    if (PKG_CONFIG_FOUND)
+        execute_process(COMMAND pkg-config --libs --static cairo OUTPUT_VARIABLE cairo_static_ldflags)
+        string(REGEX REPLACE [\r\n] " " cairo_static_ldflags ${cairo_static_ldflags})
+    else()
+        set(cairo_static_ldflags "${CAIRO_LIBRARIES}")
+    endif()
+    set(PRIVATE_LIBS "${PRIVATE_LIBS} ${cairo_static_ldflags} -ljpeg")
 endif()
 
 set_target_properties(SVGNativeViewerLib PROPERTIES LINKER_LANGUAGE CXX)
@@ -309,28 +331,8 @@ install(
       COMPONENT libraries)
 
 # headers
-
-## basic headers
-file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.h)
-
-## ports-dependent headers & examples
-if (USE_TEXT)
-set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/string/StringSVGRenderer.h)
-endif()
-if (USE_CG)
-set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/cg/CGSVGRenderer.h)
-endif()
-if (USE_SKIA)
-set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/skia/SkiaSVGRenderer.h)
-endif()
-if (USE_GDIPLUS)
-set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/gdiplus/GDIPlusSVGRenderer.h)
-endif()
-if (USE_CAIRO)
-set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/cairo/CairoSVGRenderer.h)
-endif()
 install(
-    FILES ${headers}
+    FILES ${gl_headers}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/SVGNativeViewerLib/)
 
 ##############################
@@ -344,7 +346,7 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_BINDIR}")
 set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
 set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
-set(PRIVATE_LIBS)
+set(PRIVATE_LIBS "${PRIVATE_LIBS}")
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/SVGNativeViewerLib.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/SVGNativeViewerLib.pc" @ONLY)
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/SVGNativeViewerLib-uninstalled.pc.in"
                "${CMAKE_CURRENT_BINARY_DIR}/SVGNativeViewerLib-uninstalled.pc" @ONLY)

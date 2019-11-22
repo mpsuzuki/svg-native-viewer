@@ -9,3 +9,4 @@ Version: @VERSION@
 
 Cflags: -I${includedir}
 Libs: -L${libdir} -lSVGNativeViewerLib
+Libs.private: @PRIVATE_LIBS@
