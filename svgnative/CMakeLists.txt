@@ -306,6 +306,13 @@ if (USE_CAIRO)
     set(PRIVATE_REQUIRES "${PRIVATE_REQUIRES} cairo libjpeg")
 endif()
 
+# CMake has no additional file to record the dependency for the static library,
+# we have to put direct dependencies into pkg-config files.
+if (NOT USE_SHARED)
+    set(REQUIRES "${PRIVATE_REQUIRES}")
+    set(PRIVATE_REQUIRES "")
+endif()
+
 set_target_properties(SVGNativeViewerLib PROPERTIES LINKER_LANGUAGE CXX)
 
 set(Boost_USE_STATIC_LIBS OFF)
