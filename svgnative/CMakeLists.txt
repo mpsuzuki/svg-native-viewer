@@ -295,6 +295,45 @@ else()
 endif()
 
 ##############################
+# Installation
+##############################
+include(GNUInstallDirs)
+
+# library
+install(
+    TARGETS SVGNativeViewerLib
+      EXPORT SVGNativeViewerLib-targets
+      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT libraries)
+
+# headers
+
+## basic headers
+file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.h)
+
+## ports-dependent headers & examples
+if (USE_TEXT)
+set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/string/StringSVGRenderer.h)
+endif()
+if (USE_CG)
+set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/cg/CGSVGRenderer.h)
+endif()
+if (USE_SKIA)
+set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/skia/SkiaSVGRenderer.h)
+endif()
+if (USE_GDIPLUS)
+set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/gdiplus/GDIPlusSVGRenderer.h)
+endif()
+if (USE_CAIRO)
+set(headers ${headers} ${PROJECT_SOURCE_DIR}/ports/cairo/CairoSVGRenderer.h)
+endif()
+install(
+    FILES ${headers}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/SVGNativeViewerLib/)
+
+##############################
 # Creating pkg-config file
 ##############################
 
