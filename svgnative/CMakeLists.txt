@@ -283,10 +283,12 @@ endif()
 set(PRIVATE_LIBS)
 set(REQUIRES)
 set(PRIVATE_REQUIRES)
+set(PORTS_INCLUDES)
 
 if(USE_CG)
     target_link_libraries(SVGNativeViewerLib "-framework CoreGraphics")
     set(PRIVATE_LIBS "${PRIVATE_LIBS} -framework CoreGraphics")
+    set(PORTS_INCLUDES "${PORTS_INCLUDES} -I\${includedir}/ports/cg")
 endif()
 
 if (USE_SKIA)
@@ -298,12 +300,14 @@ if (USE_SKIA)
         # XXX: how to list the libraries which libskia.a depends?
         set(PRIVATE_LIBS "${PRIVATE_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/osx/ -lskia")
     endif()
+    set(PORTS_INCLUDES "${PORTS_INCLUDES} -I\${includedir}/ports/skia")
 endif()
 
 if (USE_CAIRO)
     target_link_libraries(SVGNativeViewerLib "${CAIRO_LIBRARIES}")
     target_link_libraries(SVGNativeViewerLib "${LIBJPEG_LIBRARIES}")
     set(PRIVATE_REQUIRES "${PRIVATE_REQUIRES} cairo libjpeg")
+    set(PORTS_INCLUDES "${PORTS_INCLUDES} -I\${includedir}/ports/cairo")
 endif()
 
 # CMake has no additional file to record the dependency for the static library,
@@ -324,9 +328,29 @@ else()
 endif()
 
 ##############################
-# Installation
+# Creating pkg-config file
 ##############################
 include(GNUInstallDirs)
+
+set(BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_BINDIR}")
+set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
+set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+set(PRIVATE_LIBS "${PRIVATE_LIBS}")
+set(REQUIRES "${REQUIRES}")
+set(PRIVATE_REQUIRES "${PRIVATE_REQUIRES}")
+set(PORTS_INCLUDES "${PORTS_INCLUDES}")
+set(HEADER_SUBDIR "svgnative")
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/SVGNativeViewerLib.pc.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/SVGNativeViewerLib.pc" @ONLY)
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/SVGNativeViewerLib-uninstalled.pc.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/SVGNativeViewerLib-uninstalled.pc" @ONLY)
+
+##############################
+# Installation
+##############################
 
 # library
 install(
@@ -340,22 +364,12 @@ install(
 # headers
 install(
     FILES ${gl_headers}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/SVGNativeViewerLib/)
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${HEADER_SUBDIR}
+    COMPONENT headers)
 
-##############################
-# Creating pkg-config file
-##############################
+# pkg-config file
+install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/SVGNativeViewerLib.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    COMPONENT pkgconfig)
 
-# TODO: Add includes and libraries for individual ports.
-set(BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_BINDIR}")
-set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
-set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
-set(PRIVATE_LIBS "${PRIVATE_LIBS}")
-set(REQUIRES "${REQUIRES}")
-set(PRIVATE_REQUIRES "${PRIVATE_REQUIRES}")
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/SVGNativeViewerLib.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/SVGNativeViewerLib.pc" @ONLY)
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/SVGNativeViewerLib-uninstalled.pc.in"
-               "${CMAKE_CURRENT_BINARY_DIR}/SVGNativeViewerLib-uninstalled.pc" @ONLY)
