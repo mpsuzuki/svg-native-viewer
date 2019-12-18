@@ -532,9 +532,13 @@ std::unique_ptr<Path> SVGDocumentImpl::ParseShape(XMLNode* child)
         {
             path->Rect(x, y, width, height);
         }
+        else if (rx == ry)
+        {
+            path->RoundedRect(x, y, width, height, rx);
+        }
         else
         {
-            path->RoundedRect(x, y, width, height, std::max(rx, ry));
+            path->RoundedRect(x, y, width, height, rx, ry);
         }
         return path;
     }
