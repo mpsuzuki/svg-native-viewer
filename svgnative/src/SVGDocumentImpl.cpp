@@ -498,18 +498,21 @@ std::unique_ptr<Path> SVGDocumentImpl::ParseShape(XMLNode* child)
             ry = 0;
         }
 
-        rx = std::min(rx, width / 2.0f);
-        ry = std::min(ry, height / 2.0f);
+        rx = std::max(0.0f, std::min(rx, width / 2.0f));
+        ry = std::max(0.0f, std::min(ry, height / 2.0f));
 
         auto path = mRenderer->CreatePath();
         if (rx == 0 && ry == 0)
         {
             path->Rect(x, y, width, height);
         }
+        else if (rx == ry)
+        {
+            path->RoundedRect(x, y, width, height, rx);
+        }
         else
         {
-            SVG_ASSERT(rx == ry);
-            path->RoundedRect(x, y, width, height, std::max(rx, ry));
+            path->RoundedRect(x, y, width, height, rx, ry);
         }
         return path;
     }
