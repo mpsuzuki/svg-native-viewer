@@ -76,6 +76,12 @@ void CairoSVGPath::RoundedRect(float x, float y, float width, float height, floa
     // Cairo does not provide single API to draw "rounded rect". See
     // https://www.cairographics.org/samples/rounded_rectangle/
 
+    if (cornerRadiusX == 0 || cornerRadiusY == 0)
+    {
+        Rect(x, y, width, height);
+        return;
+    }
+
     cairo_new_sub_path(mPathCtx);
 
     cairo_arc_rx_ry(mPathCtx, x - cornerRadiusX + width, y + cornerRadiusY,          cornerRadiusX, cornerRadiusY, deg2rad(-90), deg2rad(  0));
