@@ -73,15 +73,36 @@ void CairoSVGPath::Ellipse(float cx, float cy, float rx, float ry)
     // Cairo does not provide single API to draw "ellipse". See
     // https://cairographics.org/cookbook/ellipses/
 
-    cairo_matrix_t  save_matrix;
-    cairo_get_matrix(mPathCtx, &save_matrix);
-
-    cairo_translate(mPathCtx, cx, cy);
-    cairo_scale(mPathCtx, rx, ry);
     cairo_new_sub_path(mPathCtx);
-    cairo_arc(mPathCtx, 0, 0, 1, 0, 2 * M_PI);
 
-    cairo_set_matrix(mPathCtx, &save_matrix);
+    if (rx == 0 || ry == 0)
+    {
+        cairo_bool_t had_current_point = cairo_has_current_point(mPathCtx);
+        double x, y;
+
+        if (had_current_point)
+            cairo_get_current_point(mPathCtx, &x, &y);
+
+        cairo_move_to(mPathCtx, cx - rx, cy - ry);        
+        cairo_line_to(mPathCtx, cx + rx, cy - ry);        
+        cairo_line_to(mPathCtx, cx + rx, cy + ry);        
+        cairo_line_to(mPathCtx, cx - rx, cy + ry);        
+
+        if (had_current_point)
+            cairo_move_to(mPathCtx, x, y);
+    }
+    else
+    {
+        cairo_matrix_t  save_matrix;
+
+        cairo_get_matrix(mPathCtx, &save_matrix);
+        cairo_translate(mPathCtx, cx, cy);
+        cairo_scale(mPathCtx, rx, ry);
+        cairo_arc(mPathCtx, 0, 0, 1, 0, 2 * M_PI);
+        cairo_set_matrix(mPathCtx, &save_matrix);
+    }
+
+    cairo_close_path(mPathCtx);
 }
 
 void CairoSVGPath::MoveTo(float x, float y)
