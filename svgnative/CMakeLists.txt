@@ -71,7 +71,7 @@ if(CAIRO)
         message(FATAL_ERROR "Fatal error: Cairo port is requested, but CAIRO developers' files are missing.")
     else()
        # FindJPEG.cmake does not use pkg-config, we do as FindCairo.cmake.
-       # pkg_check_modules(PC_JPEG libjpeg)
+       pkg_check_modules(PC_JPEG libjpeg)
        if (PC_JPEG_FOUND)
            FIND_PATH(JPEG_INCLUDE_DIRS NAMES jpeglib.h HINTS ${PC_JPEG_INCLUDEDIR})
            FIND_LIBRARY(JPEG_LIBRARY NAMES jpeg HINTS ${PC_JPEG_LIBDIR})
