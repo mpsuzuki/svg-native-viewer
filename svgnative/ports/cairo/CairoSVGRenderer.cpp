@@ -64,6 +64,9 @@ void CairoSVGPath::RoundedRect(float x, float y, float width, float height, floa
 
 inline void cairo_arc_rx_ry(cairo_t* cr, float cx, float cy, float rx, float ry, float rad1, float rad2)
 {
+    // cairo_scale() with too small rx (or ry) breaks Cairo context.
+    // they are tested and refused by the caller, SVGDocumentImpl::ParseShape().
+
     cairo_save(cr);
     cairo_translate(cr, cx, cy);
     cairo_scale(cr, rx, ry);
@@ -73,22 +76,11 @@ inline void cairo_arc_rx_ry(cairo_t* cr, float cx, float cy, float rx, float ry,
 
 void CairoSVGPath::RoundedRect(float x, float y, float width, float height, float cornerRadiusX, float cornerRadiusY)
 {
-    // Cairo does not provide single API to draw "rounded rect". See
-    // https://www.cairographics.org/samples/rounded_rectangle/
-
-    if (cornerRadiusX == 0 || cornerRadiusY == 0)
-    {
-        Rect(x, y, width, height);
-        return;
-    }
-
     cairo_new_sub_path(mPathCtx);
-
     cairo_arc_rx_ry(mPathCtx, x - cornerRadiusX + width, y + cornerRadiusY,          cornerRadiusX, cornerRadiusY, deg2rad(-90), deg2rad(  0));
     cairo_arc_rx_ry(mPathCtx, x - cornerRadiusX + width, y - cornerRadiusY + height, cornerRadiusX, cornerRadiusY, deg2rad(  0), deg2rad( 90));
     cairo_arc_rx_ry(mPathCtx, x + cornerRadiusX,         y - cornerRadiusY + height, cornerRadiusX, cornerRadiusY, deg2rad( 90), deg2rad(180));
     cairo_arc_rx_ry(mPathCtx, x + cornerRadiusX,         y + cornerRadiusY,          cornerRadiusX, cornerRadiusY, deg2rad(180), deg2rad(270));
-
     cairo_close_path(mPathCtx);
 }
 
