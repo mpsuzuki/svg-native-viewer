@@ -18,62 +18,6 @@ governing permissions and limitations under the License.
 
 namespace SVGNative
 {
-class GDIPlusSVGPath final : public Path
-{
-public:
-    GDIPlusSVGPath();
-    ~GDIPlusSVGPath();
-
-    void Rect(float x, float y, float width, float height) override;
-    void RoundedRect(float x, float y, float width, float height, float rx, float ry) override;
-    void Ellipse(float cx, float cy, float rx, float ry) override;
-
-    void MoveTo(float x, float y) override;
-    void LineTo(float x, float y) override;
-    void CurveTo(float x1, float y1, float x2, float y2, float x3, float y3) override;
-    void CurveToV(float x2, float y2, float x3, float y3) override;
-    void ClosePath() override;
-
-    const Gdiplus::GraphicsPath& GetGraphicsPath() const;
-
-private:
-    Gdiplus::GraphicsPath mPath;
-    float mCurrentX{};
-    float mCurrentY{};
-};
-
-class GDIPlusSVGTransform final : public Transform
-{
-public:
-    GDIPlusSVGTransform(float a, float b, float c, float d, float tx, float ty);
-
-    void Set(float a, float b, float c, float d, float tx, float ty) override;
-    void Rotate(float r) override;
-    void Translate(float tx, float ty) override;
-    void Scale(float sx, float sy) override;
-    void Concat(const Transform& other) override;
-
-    const Gdiplus::Matrix& GetMatrix() const;
-
-private:
-    Gdiplus::Matrix mTransform;
-};
-
-class GDIPlusSVGImageData final : public ImageData
-{
-public:
-    GDIPlusSVGImageData(const std::string& base64, ImageEncoding encoding);
-    ~GDIPlusSVGImageData();
-
-    float Width() const override;
-    float Height() const override;
-
-    const std::unique_ptr<Gdiplus::Image>& GetImage() const;
-
-private:
-    std::unique_ptr<Gdiplus::Image> mImage;
-};
-
 class SVG_IMP_EXP GDIPlusSVGRenderer final : public SVGRenderer
 {
 public:

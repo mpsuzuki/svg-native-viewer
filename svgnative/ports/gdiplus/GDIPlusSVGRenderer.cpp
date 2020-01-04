@@ -14,6 +14,7 @@ governing permissions and limitations under the License.
 #include <gdiplus.h>
 
 #include "Config.h"
+#include "GDIPlusSVGRendererImpl.h"
 #include "GDIPlusSVGRenderer.h"
 #include "base64.h"
 
