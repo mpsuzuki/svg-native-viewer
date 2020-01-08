@@ -66,6 +66,28 @@ CMAKE_DEPENDENT_OPTION(USE_CAIRO_EXAMPLE "Cairo example" TRUE "NOT LIB_ONLY;CAIR
 find_package(PkgConfig)
 
 ################################
+# setting for Skia
+################################
+if(SKIA)
+    if (NOT DEFINED SKIA_LIBRARY_PATH)
+        if (APPLE)
+            set(SKIA_LIBRARY_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/osx/libskia.a")
+        elseif (WIN32)
+            set(SKIA_LIBRARY_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/skia.lib")
+        else()
+            message(FATAL_ERROR "Fatal error: No usable Skia library is found, please specify -DSKIA_LIBRARY_PATH=XXX.")
+        endif()
+    endif()
+    if (EXISTS "${SKIA_LIBRARY_PATH}")
+        message(STATUS "Skia library at ${SKIA_LIBRARY_PATH} would be used")
+    else()
+        message(FATAL_ERROR "Fatal error: No usable Skia library is found at ${SKIA_LIBRARY_PATH}")
+    endif()
+    get_filename_component(SKIA_LIBRARY_DIR ${SKIA_LIBRARY_PATH} DIRECTORY)
+    set(SKIA_LIBRARY_LDFLAGS "-L${SKIA_LIBRARY_DIR} -lskia")
+endif()
+
+################################
 # setting for Cairo
 ################################
 if(CAIRO)
@@ -351,16 +373,8 @@ if(USE_CG)
 endif()
 
 if (USE_SKIA)
-    if(MSVC)
-        target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/skia.lib")
-        set(PRIVATE_LIBS "${PRIVATE_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/ -lskia")
-    elseif(APPLE)
-        target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/osx/libskia.a")
-        # XXX: how to list the libraries which libskia.a depends?
-        set(PRIVATE_LIBS "${PRIVATE_LIBS} -L${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/lib/osx/ -lskia")
-    else()
-        target_link_libraries(SVGNativeViewerLib "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/skia/out/Shared/libskia.so")
-    endif()
+    target_link_libraries(SVGNativeViewerLib "${SKIA_LIBRARY_PATH}")
+    set(PRIVATE_LIBS "${PRIVATE_LIBS} ${SKIA_LIBRARY_LDFLAGS}")
     set(PORTS_INCLUDES "${PORTS_INCLUDES} -I\${includedir}/ports/skia")
 endif()
 
