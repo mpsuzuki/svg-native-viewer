@@ -12,6 +12,8 @@ cmake --build build/win64 --config Release
 set(VERSION "0.9.0")
 
 cmake_minimum_required(VERSION 3.5.0)
+cmake_policy(SET CMP0091 NEW) # for MSVC_RUNTIME_LIBRARY
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 project(SVGNativeViewer)
 enable_language(CXX)
@@ -124,7 +126,7 @@ endif()
 if(EXISTS "${CMAKE_TOOLCHAIN_FILE}")
     # do not apply any global settings if the toolchain
     # is being configured externally
-elseif(MSVC)
+elseif(WIN32)
     #add_definitions(/FI"${CMAKE_CURRENT_SOURCE_DIR}/public/include/CloudAI/ai/ASConfig.h")
     # Visual Studio pedantic build settings
     # warning C4512: assignment operator could not be generated
@@ -136,11 +138,18 @@ elseif(MSVC)
     # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:sizedDealloc-")
 
-    if (WIN32 AND DEFINED WIN32_OBJECT_TYPE)
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${WIN32_OBJECT_TYPE}d")
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${WIN32_OBJECT_TYPE}")
-        set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} ${WIN32_OBJECT_TYPE}")
-        set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_RELEASE} ${WIN32_OBJECT_TYPE}")
+    if (DEFINED WIN32_OBJECT_TYPE)
+        if (CMAKE_VERSION VERSION_LESS "3.15")
+            message(STATUS "CMake is too old (< 3.15), maybe output project file has wrong switch in /MT or /MD.")
+            set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${WIN32_OBJECT_TYPE}d")
+            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${WIN32_OBJECT_TYPE}")
+            set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} ${WIN32_OBJECT_TYPE}")
+            set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_RELEASE} ${WIN32_OBJECT_TYPE}")
+        elseif(WIN32_OBJECT_TYPE STREQUAL "/MT")
+            set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+        elseif(WIN32_OBJECT_TYPE STREQUAL "/MD")
+            set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+        endif()
     endif()
 elseif(APPLE)
     # GCC or Clang
